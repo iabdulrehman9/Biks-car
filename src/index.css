@@ -58,3 +58,379 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #0B1E36;
 }
+/* =========================================================
+   BIKS PREMIUM ANIMATIONS
+========================================================= */
+
+@keyframes biks-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes biks-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes biks-fade-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes biks-fade-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes biks-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes biks-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes biks-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes biks-shine {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes biks-line {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+
+/* =========================================================
+   INITIAL HERO ANIMATIONS
+========================================================= */
+
+.biks-hero-badge {
+  animation: biks-fade-down 0.8s ease-out both;
+}
+
+.biks-hero-title {
+  animation: biks-fade-up 0.9s 0.15s ease-out both;
+}
+
+.biks-hero-description {
+  animation: biks-fade-up 0.9s 0.3s ease-out both;
+}
+
+.biks-hero-search {
+  animation: biks-scale 0.8s 0.45s ease-out both;
+}
+
+.biks-hero-popular {
+  animation: biks-fade-up 0.7s 0.6s ease-out both;
+}
+
+.biks-hero-trust {
+  animation: biks-fade-up 0.7s 0.75s ease-out both;
+}
+
+.biks-hero-stats {
+  animation: biks-fade-up 0.8s 0.4s ease-out both;
+}
+
+
+/* =========================================================
+   SCROLL REVEAL
+========================================================= */
+
+.biks-reveal {
+  opacity: 0;
+  transform: translateY(35px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.biks-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.biks-reveal-left {
+  opacity: 0;
+  transform: translateX(-35px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.biks-reveal-left.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.biks-reveal-right {
+  opacity: 0;
+  transform: translateX(35px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.biks-reveal-right.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.biks-reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.biks-reveal-scale.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+/* =========================================================
+   FLOATING EFFECT
+========================================================= */
+
+.biks-float {
+  animation: biks-float 5s ease-in-out infinite;
+}
+
+.biks-glow {
+  animation: biks-glow 5s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   CARD STAGGER
+========================================================= */
+
+.biks-stagger > * {
+  opacity: 0;
+  transform: translateY(25px);
+}
+
+.biks-stagger.is-visible > * {
+  animation: biks-fade-up 0.65s ease-out forwards;
+}
+
+.biks-stagger.is-visible > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.biks-stagger.is-visible > *:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.biks-stagger.is-visible > *:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+.biks-stagger.is-visible > *:nth-child(4) {
+  animation-delay: 0.26s;
+}
+
+.biks-stagger.is-visible > *:nth-child(5) {
+  animation-delay: 0.33s;
+}
+
+.biks-stagger.is-visible > *:nth-child(6) {
+  animation-delay: 0.40s;
+}
+
+
+/* =========================================================
+   PREMIUM HOVER
+========================================================= */
+
+.biks-hover-lift {
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.biks-hover-lift:hover {
+  transform: translateY(-7px);
+}
+
+
+/* =========================================================
+   BUTTON SHINE
+========================================================= */
+
+.biks-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.biks-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.18),
+    transparent
+  );
+  transform: translateX(-120%);
+}
+
+.biks-shine:hover::after {
+  animation: biks-shine 0.8s ease;
+}
+
+
+/* =========================================================
+   PROCESS CONNECTING LINE
+========================================================= */
+
+.biks-process-line {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.4s ease;
+}
+
+.biks-process-line.is-visible {
+  transform: scaleX(1);
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .biks-reveal,
+  .biks-reveal-left,
+  .biks-reveal-right,
+  .biks-reveal-scale {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.7s ease-out both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-up,
+  .animate-fade-in,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none !important;
+  }
+
+  * {
+    scroll-behavior: auto !important;
+  }
+}
