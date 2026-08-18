@@ -37,233 +37,153 @@ export function AboutPage() {
 
   const milestones = [
     {
-      year: '2010',
+      year: '2016',
       title: 'Founded in Yokohama',
       desc: 'BIKS established as a Japanese vehicle export company.',
     },
-    {
-      year: '2014',
-      title: '10,000 Vehicles Exported',
-      desc: 'Reached our first major milestone serving African markets.',
-    },
-    {
-      year: '2018',
-      title: 'Global Expansion',
-      desc: 'Expanded operations to serve 45+ countries across 5 continents.',
-    },
-    {
-      year: '2024',
-      title: 'Digital Platform Launch',
-      desc: 'Launched our integrated online marketplace and customer portal.',
-    },
   ];
 
-  const stats = [
-    {
-      icon: TrendingUp,
-      value: '12,400+',
-      label: 'Vehicles Sold',
-    },
-    {
-      icon: Users,
-      value: '3,800+',
-      label: 'Happy Clients',
-    },
-    {
-      icon: Globe2,
-      value: '45+',
-      label: 'Countries Served',
-    },
-    {
-      icon: Award,
-      value: '15+',
-      label: 'Years Experience',
-    },
-  ];
 
   return (
     <div className="animate-fade-in bg-white pt-16">
+{/* =========================================================
+    HERO
+========================================================= */}
+<section className="group relative isolate overflow-hidden bg-navy-dark py-16 sm:py-20 lg:py-24">
 
-      {/* =========================================================
-          HERO
-      ========================================================= */}
-      <section className="group relative overflow-hidden bg-navy-dark py-24 sm:py-28">
+  {/* Background */}
+  <div className="absolute inset-0 -z-10 overflow-hidden">
+    <img
+      src="https://images.pexels.com/photos/21234960/pexels-photo-21234960.jpeg?auto=compress&cs=tinysrgb&w=1600"
+      alt=""
+      className="
+        h-full
+        w-full
+        object-cover
+        opacity-25
+        transition-transform
+        duration-[12000ms]
+        ease-out
+        group-hover:scale-105
+      "
+    />
 
-        {/* Background Image */}
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src="https://images.pexels.com/photos/21234960/pexels-photo-21234960.jpeg?auto=compress&cs=tinysrgb&w=1600"
-            alt="Container port"
-            className="
-              h-full
-              w-full
-              object-cover
-              opacity-20
-              transition-transform
-              duration-[12000ms]
-              ease-out
-              group-hover:scale-105
-            "
-          />
+    <div className="absolute inset-0 bg-gradient-to-r from-navy-dark via-navy-dark/95 to-navy-dark/65" />
 
-          <div className="absolute inset-0 bg-gradient-to-r from-navy-dark via-navy-dark/90 to-navy/60" />
+    <div className="absolute -right-32 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-gold/10 blur-3xl" />
+  </div>
 
-          {/* Bottom fade */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-navy-dark to-transparent" />
+  <div className="container-page relative px-4 sm:px-6 lg:px-8">
 
-          {/* Decorative glow */}
-          <div className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-gold/10 blur-3xl animate-pulse" />
+    <div className="max-w-3xl">
+
+      {/* Eyebrow */}
+      <div
+        className="animate-slide-up"
+        style={{ animationDelay: '100ms' }}
+      >
+        <div className="inline-flex items-center gap-2.5 rounded-full border border-gold/20 bg-white/[0.03] px-3 py-1.5 backdrop-blur-sm">
+          <span className="h-px w-6 bg-gold" />
+
+          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold">
+            About BIKS Trading Company
+           </span>
         </div>
+      </div>
 
-        <div className="relative container-page px-4 sm:px-6 lg:px-8">
+      {/* Heading */}
+      <h1
+        className="
+          mt-4
+          animate-slide-up
+          text-3xl
+          font-black
+          leading-[1.1]
+          tracking-tight
+          text-white
+          sm:text-4xl
+          lg:text-5xl
+        "
+        style={{ animationDelay: '200ms' }}
+      >
+        Quality Japanese Vehicles.
+        <span className="block text-gold">
+          Global Export Service.
+        </span>
+      </h1>
 
-          <div className="max-w-3xl">
+      {/* Description */}
+      <p
+        className="
+          mt-4
+          max-w-2xl
+          animate-slide-up
+          text-sm
+          leading-6
+          text-white/65
+          sm:text-base
+        "
+        style={{ animationDelay: '300ms' }}
+      >
+        BIKS connects buyers worldwide with quality Japanese vehicles,
+        transparent trading and professional export support from Japan
+        to your destination.
+      </p>
 
-            {/* Eyebrow */}
-            <div
-              className="animate-slide-up"
-              style={{ animationDelay: '100ms' }}
-            >
-              <div className="inline-flex items-center gap-3">
-                <span className="h-px w-8 bg-gold" />
+      {/* Compact CTA */}
+      <div
+        className="mt-6 flex animate-slide-up flex-wrap gap-3"
+        style={{ animationDelay: '400ms' }}
+      >
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="
+            inline-flex
+            items-center
+            justify-center
+            rounded-lg
+            bg-gold
+            px-5
+            py-2.5
+            text-sm
+            font-bold
+            text-navy-dark
+            transition-all
+            hover:-translate-y-0.5
+            hover:shadow-lg
+          "
+        >
+          View Vehicles
+        </button>
 
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">
-                  About BIKS
-                </p>
-              </div>
-            </div>
+        <a
+          href="tel:+923369829829"
+          className="
+            inline-flex
+            items-center
+            justify-center
+            rounded-lg
+            border
+            border-white/15
+            px-5
+            py-2.5
+            text-sm
+            font-semibold
+            text-white
+            transition-colors
+            hover:border-gold/50
+            hover:bg-white/5
+          "
+        >
+          Contact Us
+        </a>
+      </div>
 
-            {/* Heading */}
-            <h1
-              className="
-                mt-5
-                animate-slide-up
-                text-4xl
-                font-black
-                leading-tight
-                tracking-tight
-                text-white
-                sm:text-5xl
-                lg:text-6xl
-              "
-              style={{ animationDelay: '200ms' }}
-            >
-              Japan's Trusted{' '}
-              <span className="text-gold">
-                Vehicle Export Partner
-              </span>
-            </h1>
 
-            {/* Description */}
-            <p
-              className="
-                mt-6
-                max-w-2xl
-                animate-slide-up
-                text-base
-                leading-7
-                text-white/70
-                sm:text-lg
-              "
-              style={{ animationDelay: '350ms' }}
-            >
-              For over 15 years, BIKS Car Trading Company has connected
-              buyers worldwide with premium Japanese vehicles — built on
-              a foundation of trust, quality, and end-to-end service.
-            </p>
-
-            {/* Bottom trust indicators */}
-            <div
-              className="
-                mt-8
-                flex
-                animate-slide-up
-                flex-wrap
-                gap-x-6
-                gap-y-3
-                text-xs
-                font-medium
-                text-white/50
-              "
-              style={{ animationDelay: '500ms' }}
-            >
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-gold" />
-                Verified Vehicles
-              </span>
-
-              <span className="flex items-center gap-2">
-                <Ship className="h-4 w-4 text-gold" />
-                Worldwide Shipping
-              </span>
-
-              <span className="flex items-center gap-2">
-                <Globe2 className="h-4 w-4 text-gold" />
-                Global Network
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================
-          STATS
-      ========================================================= */}
-      <section className="border-b border-gray-200 bg-white">
-        <div className="container-page grid grid-cols-2 gap-4 px-4 py-12 sm:px-6 lg:grid-cols-4 lg:px-8">
-
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
-              className="
-                group
-                animate-slide-up
-                rounded-xl
-                p-4
-                text-center
-                transition-all
-                duration-300
-                hover:-translate-y-1
-                hover:bg-gray-50
-              "
-              style={{
-                animationDelay: `${150 + index * 100}ms`,
-              }}
-            >
-              <div
-                className="
-                  mx-auto
-                  flex
-                  h-12
-                  w-12
-                  items-center
-                  justify-center
-                  rounded-xl
-                  bg-navy/5
-                  text-navy
-                  transition-all
-                  duration-300
-                  group-hover:bg-navy
-                  group-hover:text-gold
-                  group-hover:scale-110
-                "
-              >
-                <stat.icon className="h-6 w-6" />
-              </div>
-
-              <div className="mt-4 text-2xl font-black tracking-tight text-navy">
-                {stat.value}
-              </div>
-
-              <div className="mt-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-                {stat.label}
-              </div>
-            </div>
-          ))}
-
-        </div>
-      </section>
-
+    </div>
+  </div>
+</section>
       {/* =========================================================
           VALUES
       ========================================================= */}
@@ -414,7 +334,7 @@ export function AboutPage() {
               "
               style={{ animationDelay: '200ms' }}
             >
-              15 Years of Excellence
+              10 Years of Excellence
             </h2>
 
             <p
@@ -593,7 +513,7 @@ export function AboutPage() {
               animate-slide-up
               text-sm
               leading-6
-              text-white/60
+              text-white
             "
             style={{ animationDelay: '300ms' }}
           >
@@ -614,7 +534,7 @@ export function AboutPage() {
               gap-x-6
               gap-y-2
               text-[11px]
-              text-white/35
+              text-white
             "
             style={{ animationDelay: '550ms' }}
           >

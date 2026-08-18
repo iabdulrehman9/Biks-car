@@ -175,7 +175,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="font-medium text-white/60 transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold"
             >
-              AR
+              AIWA Logic
             </a>
           </p>
         </div>
