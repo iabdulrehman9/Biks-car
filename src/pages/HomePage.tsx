@@ -212,7 +212,7 @@ export function HomePage() {
                     <span className="h-px w-7 bg-gold" />
 
                     <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold">
-                      Japanese Vehicle
+                      BIKS TRADING COMPANY
                     </span>
                   </div>
 
@@ -278,7 +278,7 @@ export function HomePage() {
       <div className="container-page px-4 sm:px-6 lg:px-8">
         <div className="max-w-xl">
           <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold">
-            BIKS Car Trading
+            BIKS Trading Company
           </span>
 
           <h1 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
@@ -333,7 +333,7 @@ export function HomePage() {
       <span className="h-px w-7 bg-gold" />
 
       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-dark">
-        Available Inventory
+        Vehicle Showcase
       </span>
     </div>
 

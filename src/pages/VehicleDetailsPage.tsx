@@ -191,7 +191,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="btn-primary mt-5"
+            className="btn-primary mt-10"
           >
             Back to Home
           </button>
