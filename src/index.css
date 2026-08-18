@@ -42,7 +42,23 @@
     @apply mx-auto max-w-8xl;
   }
 }
+.hero-vehicle-swiper .swiper-pagination {
+  bottom: 28px !important;
+}
 
+.hero-vehicle-swiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  background: white;
+  opacity: 0.4;
+}
+
+.hero-vehicle-swiper .swiper-pagination-bullet-active {
+  width: 28px;
+  border-radius: 999px;
+  background: #d4af37;
+  opacity: 1;
+}
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;

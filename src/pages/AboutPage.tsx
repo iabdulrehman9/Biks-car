@@ -49,60 +49,167 @@ export function AboutPage() {
 {/* =========================================================
     HERO
 ========================================================= */}
-<section className="group relative isolate overflow-hidden bg-navy-dark py-16 sm:py-20 lg:py-24">
-
-  {/* Background */}
+<section
+  className="
+    group
+    relative
+    isolate
+    flex
+    h-[460px]
+    overflow-hidden
+    bg-navy-dark
+  "
+>
+  {/* =======================================================
+      BACKGROUND IMAGE
+  ======================================================= */}
   <div className="absolute inset-0 -z-10 overflow-hidden">
     <img
       src="https://images.pexels.com/photos/21234960/pexels-photo-21234960.jpeg?auto=compress&cs=tinysrgb&w=1600"
       alt=""
+      aria-hidden="true"
       className="
         h-full
         w-full
         object-cover
-        opacity-25
+        object-center
+        opacity-30
         transition-transform
         duration-[12000ms]
         ease-out
-        group-hover:scale-105
+        group-hover:scale-[1.04]
+        motion-reduce:transition-none
+        motion-reduce:group-hover:scale-100
       "
     />
 
-    <div className="absolute inset-0 bg-gradient-to-r from-navy-dark via-navy-dark/95 to-navy-dark/65" />
+    {/* Main overlay */}
+    <div
+      className="
+        absolute
+        inset-0
+        bg-gradient-to-r
+        from-navy-dark
+        via-navy-dark/95
+        to-navy-dark/60
+      "
+    />
 
-    <div className="absolute -right-32 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-gold/10 blur-3xl" />
+    {/* Bottom fade */}
+    <div
+      className="
+        absolute
+        inset-x-0
+        bottom-0
+        h-32
+        bg-gradient-to-t
+        from-navy-dark/40
+        to-transparent
+      "
+    />
+
+    {/* Gold glow */}
+    <div
+      className="
+        absolute
+        -right-40
+        top-1/2
+        h-[420px]
+        w-[420px]
+        -translate-y-1/2
+        rounded-full
+        bg-gold/10
+        blur-3xl
+      "
+    />
+
+    {/* Decorative line */}
+    <div
+      className="
+        absolute
+        bottom-0
+        left-0
+        h-px
+        w-full
+        bg-gradient-to-r
+        from-transparent
+        via-gold/40
+        to-transparent
+      "
+    />
   </div>
 
-  <div className="container-page relative px-4 sm:px-6 lg:px-8">
-
+  {/* =======================================================
+      CONTENT
+  ======================================================= */}
+  <div
+    className="
+      container-page
+      relative
+      flex
+      w-full
+      items-center
+      px-4
+      py-8
+      sm:px-6
+      lg:px-8
+    "
+  >
     <div className="max-w-3xl">
 
-      {/* Eyebrow */}
+      {/* ===================================================
+          EYEBROW
+      =================================================== */}
       <div
         className="animate-slide-up"
         style={{ animationDelay: '100ms' }}
       >
-        <div className="inline-flex items-center gap-2.5 rounded-full border border-gold/20 bg-white/[0.03] px-3 py-1.5 backdrop-blur-sm">
+        <div
+          className="
+            inline-flex
+            items-center
+            gap-2.5
+            rounded-full
+            border
+            border-gold/25
+            bg-white/[0.04]
+            px-3.5
+            py-1.5
+            backdrop-blur-md
+          "
+        >
           <span className="h-px w-6 bg-gold" />
 
-          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold">
+          <span
+            className="
+              text-[10px]
+              font-bold
+              uppercase
+              tracking-[0.18em]
+              text-gold
+            "
+          >
             About BIKS Trading Company
-           </span>
+          </span>
         </div>
       </div>
 
-      {/* Heading */}
+      {/* ===================================================
+          HEADING
+      =================================================== */}
       <h1
         className="
           mt-4
+          max-w-3xl
           animate-slide-up
           text-3xl
           font-black
-          leading-[1.1]
+          leading-[1.08]
           tracking-tight
           text-white
           sm:text-4xl
           lg:text-5xl
+          xl:text-[52px]
         "
         style={{ animationDelay: '200ms' }}
       >
@@ -112,7 +219,9 @@ export function AboutPage() {
         </span>
       </h1>
 
-      {/* Description */}
+      {/* ===================================================
+          DESCRIPTION
+      =================================================== */}
       <p
         className="
           mt-4
@@ -120,67 +229,148 @@ export function AboutPage() {
           animate-slide-up
           text-sm
           leading-6
-          text-white/65
+          text-white/70
           sm:text-base
         "
         style={{ animationDelay: '300ms' }}
       >
         BIKS connects buyers worldwide with quality Japanese vehicles,
-        transparent trading and professional export support from Japan
+        transparent trading, and professional export support from Japan
         to your destination.
       </p>
 
-      {/* Compact CTA */}
+      {/* ===================================================
+          ACTIONS
+      =================================================== */}
       <div
-        className="mt-6 flex animate-slide-up flex-wrap gap-3"
+        className="
+          mt-6
+          flex
+          animate-slide-up
+          flex-wrap
+          gap-3
+        "
         style={{ animationDelay: '400ms' }}
       >
+        {/* Primary CTA */}
         <button
           type="button"
           onClick={() => navigate('/')}
           className="
+            group/btn
             inline-flex
+            min-h-11
             items-center
             justify-center
+            gap-2
             rounded-lg
             bg-gold
             px-5
-            py-2.5
             text-sm
             font-bold
             text-navy-dark
+            shadow-lg
+            shadow-black/10
             transition-all
+            duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
+            hover:bg-gold/90
+            hover:shadow-xl
+            active:translate-y-0
+            focus:outline-none
+            focus:ring-2
+            focus:ring-gold
+            focus:ring-offset-2
+            focus:ring-offset-navy-dark
           "
         >
           View Vehicles
+
+          <ArrowRight
+            className="
+              h-4 w-4
+              transition-transform
+              duration-200
+              group-hover/btn:translate-x-0.5
+            "
+          />
         </button>
 
+        {/* Phone CTA */}
         <a
           href="tel:+923369829829"
           className="
             inline-flex
+            min-h-11
             items-center
             justify-center
+            gap-2
             rounded-lg
             border
-            border-white/15
+            border-white/20
+            bg-white/[0.04]
             px-5
-            py-2.5
             text-sm
             font-semibold
             text-white
-            transition-colors
+            backdrop-blur-sm
+            transition-all
+            duration-200
+            hover:-translate-y-0.5
             hover:border-gold/50
-            hover:bg-white/5
+            hover:bg-white/10
+            focus:outline-none
+            focus:ring-2
+            focus:ring-gold
+            focus:ring-offset-2
+            focus:ring-offset-navy-dark
           "
         >
-          Contact Us
+          <span>Contact Us</span>
         </a>
       </div>
 
+      {/* ===================================================
+          TRUST INDICATORS
+      =================================================== */}
+      <div
+        className="
+          mt-7
+          flex
+          animate-slide-up
+          flex-wrap
+          items-center
+          gap-x-5
+          gap-y-2
+          text-[11px]
+          font-medium
+          text-white/55
+        "
+        style={{ animationDelay: '500ms' }}
+      >
+        <span className="flex items-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5 text-gold" />
+          Trusted Trading
+        </span>
 
+        <span className="hidden text-white/20 sm:inline">
+          •
+        </span>
+
+        <span className="flex items-center gap-1.5">
+          <Globe2 className="h-3.5 w-3.5 text-gold" />
+          Global Export
+        </span>
+
+        <span className="hidden text-white/20 sm:inline">
+          •
+        </span>
+
+        <span className="flex items-center gap-1.5">
+          <Award className="h-3.5 w-3.5 text-gold" />
+          Japanese Quality
+        </span>
+      </div>
     </div>
   </div>
 </section>

@@ -2,11 +2,27 @@ import { useEffect, useState } from 'react';
 import {
   Star,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  Gauge,
+  Fuel,
+  Settings2,
+  Calendar,
 } from 'lucide-react';
+
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
+
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
 
 import { supabase, type Vehicle } from '@/lib/supabase';
 import { useRouter } from '@/lib/router';
 import { VehicleCard } from '@/components/VehicleCard';
+import { formatKm } from '@/lib/format';
 
 const HERO_TRUST_POINTS = ['Verified Vehicles'] as const;
 
@@ -111,80 +127,263 @@ export function HomePage() {
   return (
     <div className="animate-fade-in bg-white">
 {/* =========================================================
-    HERO (WITH BACKGROUND VIDEO)
+    COMPACT HERO VEHICLE SLIDER — 460PX
 ========================================================= */}
 
-<section className="relative overflow-hidden bg-[#07111f] py-12 sm:py-16 lg:py-20">
-
-  {/* Background Video & Overlays */}
-  <div className="absolute inset-0 overflow-hidden">
-    
-    {/* HTML5 Video Element */}
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      className="h-full w-full object-cover object-center opacity-30"
-    >
-      <source
-        src="https://assets.mixkit.co/videos/preview/mixkit-car-driving-on-a-road-at-night-4125-large.mp4](https://assets.mixkit.co/videos/preview/mixkit-car-driving-on-a-road-at-night-4125-large.mp4)"
-      />
-      {/* Fallback image in case video fails to load */}
-      <img
-        src="https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=2000&q=80"
-        alt="Premium Japanese vehicle"
-        className="h-full w-full object-cover object-center"
-      />
-    </video>
-
-    {/* Linear Gradient Overlays for Text Legibility */}
-    <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,17,31,0.98)_0%,rgba(7,17,31,0.85)_50%,rgba(7,17,31,0.5)_100%)]" />
-    <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(7,17,31,0.95)_0%,transparent_50%)]" />
-  </div>
-
-  {/* Glow Accents */}
-  <div
-    aria-hidden="true"
-    className="biks-glow absolute -right-20 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-gold/10 blur-3xl pointer-events-none"
-  />
-
-  {/* Hero Content */}
-  <div className="relative container-page px-4 sm:px-6 lg:px-8">
-    <div className="max-w-3xl">
-
-      {/* Heading */}
-      <h1 className="biks-hero-title mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl leading-tight">
-        Your Trusted Source for{' '}
-        <span className="text-gold">Japanese Vehicles.</span>
-      </h1>
-
-      {/* Description */}
-      <p className="biks-hero-description mt-3 max-w-xl text-sm sm:text-base leading-relaxed text-white/70">
-        Connecting buyers worldwide with quality Japanese vehicles through trusted sourcing,
-        transparent pricing, professional inspection, and reliable international shipping.
-      </p>
-
-      {/* Trust Points */}
-      <div className="biks-hero-trust mt-5 flex flex-wrap gap-x-5 gap-y-2">
-        {HERO_TRUST_POINTS.map((item) => (
-          <div
-            key={item}
-            className="flex items-center gap-2 text-xs font-semibold tracking-wide text-white/80"
-          >
-            <CheckCircle2
-              className="h-4 w-4 text-gold shrink-0"
-              aria-hidden="true"
-            />
-            {item}
-          </div>
-        ))}
-      </div>
-
+<section className="relative h-[460px] overflow-hidden bg-[#071525]">
+  {loading ? (
+    <div className="flex h-[460px] items-center justify-center bg-[#071525]">
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
     </div>
-  </div>
+  ) : vehicles.length > 0 ? (
+    <Swiper
+      modules={[Navigation, Pagination, Autoplay, EffectFade]}
+      effect="fade"
+      fadeEffect={{ crossFade: true }}
+      slidesPerView={1}
+      loop={vehicles.length > 1}
+      speed={700}
+      autoplay={{
+        delay: 5000,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
+      }}
+      navigation={{
+        prevEl: '.hero-slider-prev',
+        nextEl: '.hero-slider-next',
+      }}
+      pagination={{
+        clickable: true,
+      }}
+      className="hero-vehicle-swiper h-full"
+    >
+      {vehicles.slice(0, 6).map((vehicle) => {
+        const specs = [
+          {
+            icon: Calendar,
+            value: vehicle.year?.toString() || '—',
+          },
+          {
+            icon: Gauge,
+            value: vehicle.mileage_km
+              ? `${formatKm(vehicle.mileage_km)} km`
+              : '—',
+          },
+          {
+            icon: Fuel,
+            value: vehicle.fuel_type || '—',
+          },
+          {
+            icon: Settings2,
+            value: vehicle.transmission || '—',
+          },
+        ];
+
+        return (
+          <SwiperSlide key={vehicle.id}>
+            <div className="relative h-[460px]">
+
+              {/* Background Image */}
+              <div className="absolute inset-0">
+                {vehicle.image_url ? (
+                  <img
+                    src={vehicle.image_url}
+                    alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-[#071525]" />
+                )}
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#071525] via-[#071525]/80 to-[#071525]/20" />
+
+                {/* Bottom gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#071525]/70 via-transparent to-transparent" />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 container-page flex h-full items-center px-4 sm:px-6 lg:px-8">
+
+                <div className="max-w-xl">
+
+                  {/* Small Label */}
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="h-px w-7 bg-gold" />
+
+                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold">
+                      Japanese Vehicle
+                    </span>
+                  </div>
+
+                  {/* Vehicle Name */}
+                  <h1 className="text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+                    <span className="text-white/60">
+                      {vehicle.year}{' '}
+                    </span>
+
+                    <span className="text-gold">
+                      {vehicle.make}
+                    </span>
+
+                    <span className="block">
+                      {vehicle.model}
+                    </span>
+                  </h1>
+
+                  {/* Compact Specs */}
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {specs.map((spec, index) => {
+                      const Icon = spec.icon;
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 rounded-md border border-white/10 bg-[#071525]/70 px-3 py-2 backdrop-blur-sm"
+                        >
+                          <Icon className="h-3.5 w-3.5 text-gold" />
+
+                          <span className="text-xs font-semibold text-white">
+                            {spec.value}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Button */}
+                  <div className="mt-6">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/vehicle/${vehicle.id}`)}
+                      className="group flex items-center gap-2 rounded-lg bg-gold px-5 py-3 text-sm font-bold text-navy-dark transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/20"
+                    >
+                      View Vehicle
+
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </SwiperSlide>
+        );
+      })}
+    </Swiper>
+  ) : (
+    /* Fallback */
+    <div className="relative flex h-[460px] items-center bg-[#071525]">
+      <div className="container-page px-4 sm:px-6 lg:px-8">
+        <div className="max-w-xl">
+          <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold">
+            BIKS Car Trading
+          </span>
+
+          <h1 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
+            Quality Japanese Vehicles.
+          </h1>
+
+          <button
+            type="button"
+            onClick={() => navigate('/vehicles')}
+            className="mt-6 rounded-lg bg-gold px-5 py-3 text-sm font-bold text-navy-dark"
+          >
+            Browse Vehicles
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Navigation */}
+
+  {vehicles.length > 1 && !loading && (
+    <>
+      <button
+        type="button"
+        className="hero-slider-prev absolute left-4 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-[#071525]/70 text-white backdrop-blur-md transition-all hover:border-gold hover:bg-gold hover:text-navy-dark lg:flex"
+        aria-label="Previous vehicle"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+
+      <button
+        type="button"
+        className="hero-slider-next absolute right-4 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-[#071525]/70 text-white backdrop-blur-md transition-all hover:border-gold hover:bg-gold hover:text-navy-dark lg:flex"
+        aria-label="Next vehicle"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+    </>
+  )}
 </section>
       {/* =========================================================
+          ALL VEHICLES INVENTORY
+      ========================================================= */}
+
+<section className="bg-[#f7f7f5] py-8 sm:py-6">
+          <div className="container-page">
+
+          {/* Section Header */}
+         <div className="flex items-end justify-between gap-5">
+  <div className="biks-reveal-left">
+    <div className="mb-2 flex items-center gap-3">
+      <span className="h-px w-7 bg-gold" />
+
+      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-dark">
+        Available Inventory
+      </span>
+    </div>
+
+    <h2 className="text-2xl font-black tracking-tight text-navy sm:text-3xl">
+      All Vehicles
+    </h2>
+  </div>
+</div>
+
+          {/* Vehicle Content */}
+          {loading ? (
+            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 animate-pulse rounded-2xl bg-gray-200"
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+          ) : vehicles.length > 0 ? (
+            <div className="biks-stagger mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {vehicles.map((vehicle) => (
+                <div
+                  key={vehicle.id}
+                  className="transition-transform duration-300 hover:-translate-y-1"
+                >
+                  <VehicleCard vehicle={vehicle} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="biks-reveal-scale mt-10 rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
+
+              <div className="mx-auto h-1 w-10 rounded-full bg-gold" />
+
+              <h3 className="mt-5 font-bold text-navy">
+                No Vehicles Available Right Now
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+                Check back soon or contact our sales team to place a direct auction query.
+              </p>
+
+            </div>
+          )}
+
+        </div>
+      </section>
+       {/* =========================================================
     WHY BIKS
 ========================================================= */}
 
@@ -250,80 +449,6 @@ export function HomePage() {
     </div>
   </div>
 </section>
-
-      {/* =========================================================
-          ALL VEHICLES INVENTORY
-      ========================================================= */}
-
-      <section className="section-padding bg-[#f7f7f5]">
-        <div className="container-page">
-
-          {/* Section Header */}
-          <div className="flex items-end justify-between gap-5">
-            <div className="biks-reveal-left">
-
-              <div className="mb-3 flex items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className="h-px w-8 bg-gold"
-                />
-
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold-dark">
-                  Available Inventory
-                </span>
-              </div>
-
-              <h2 className="text-3xl font-black tracking-tight text-navy sm:text-4xl">
-                All Vehicles
-              </h2>
-
-              <p className="mt-3 max-w-xl text-sm text-gray-500">
-                Explore our entire catalog of quality Japanese vehicles ready for global export.
-              </p>
-
-            </div>
-          </div>
-
-          {/* Vehicle Content */}
-          {loading ? (
-            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-80 animate-pulse rounded-2xl bg-gray-200"
-                  aria-hidden="true"
-                />
-              ))}
-            </div>
-          ) : vehicles.length > 0 ? (
-            <div className="biks-stagger mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {vehicles.map((vehicle) => (
-                <div
-                  key={vehicle.id}
-                  className="transition-transform duration-300 hover:-translate-y-1"
-                >
-                  <VehicleCard vehicle={vehicle} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="biks-reveal-scale mt-10 rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
-
-              <div className="mx-auto h-1 w-10 rounded-full bg-gold" />
-
-              <h3 className="mt-5 font-bold text-navy">
-                No Vehicles Available Right Now
-              </h3>
-
-              <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
-                Check back soon or contact our sales team to place a direct auction query.
-              </p>
-
-            </div>
-          )}
-
-        </div>
-      </section>
 {/* =========================================================
     FINAL CTA (COMPACT VERSION)
 ========================================================= */}
