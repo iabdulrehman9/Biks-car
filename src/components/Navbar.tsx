@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Search, ChevronDown } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { useRouter } from '@/lib/router';
 
 const navLinks = [
   { label: 'Home', path: '/' },
-  { label: 'Marketplace', path: '/marketplace' },
   { label: 'About', path: '/about' },
 ];
 
@@ -41,15 +40,16 @@ export function Navbar() {
           : 'border-b border-slate-100 shadow-sm'
       }`}
     >
-<nav className="container-page flex h-[76px] items-center justify-between px-4 sm:px-6 lg:px-8">
+      <nav className="container-page flex h-[76px] items-center justify-between px-4 sm:px-6 lg:px-8">
+
         {/* Logo */}
         <button
-  onClick={() => navigate('/')}
-  className="flex h-16 shrink-0 items-center"
-  aria-label="BIKS Car Trading Company Home"
->
-  <Logo />
-</button>
+          onClick={() => navigate('/')}
+          className="flex h-16 shrink-0 items-center"
+          aria-label="BIKS Car Trading Company Home"
+        >
+          <Logo />
+        </button>
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-1 lg:flex">
@@ -74,33 +74,19 @@ export function Navbar() {
               </button>
             );
           })}
-
-          <div className="mx-2 h-6 w-px bg-slate-200" />
-
-         
-
-          {/* Search */}
-          <button
-            onClick={() => navigate('/marketplace')}
-            aria-label="Search vehicles"
-            className="ml-1 flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100 hover:text-navy"
-          >
-            <Search className="h-4 w-4" />
-          </button>
         </div>
 
-        {/* Quote CTA */}
-       {/* Contact CTA */}
-<button
-  type="button"
-  onClick={() => {
-    window.location.href = 'tel:+819077144212';
-  }}
-  aria-label="Call us"
-  className="hidden btn-premium !px-4 !py-2 lg:inline-flex"
->
-  Contact Us
-</button>
+        {/* Contact CTA */}
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = 'tel:+819077144212';
+          }}
+          aria-label="Call us"
+          className="hidden btn-premium !px-4 !py-2 lg:inline-flex"
+        >
+          Contact Us
+        </button>
 
         {/* Mobile Menu Button */}
         <button
@@ -121,7 +107,6 @@ export function Navbar() {
       {mobileOpen && (
         <div className="animate-slide-down border-t border-slate-200 bg-white px-4 py-4 shadow-lg lg:hidden">
           <div className="flex flex-col gap-1">
-
             {navLinks.map((link) => {
               const active = isActive(link.path);
 
@@ -140,14 +125,14 @@ export function Navbar() {
               );
             })}
 
-            
-
-            {/* Quote CTA */}
+            {/* Contact CTA */}
             <button
-              onClick={() => navigate('/inquiry')}
+              onClick={() => {
+                window.location.href = 'tel:+819077144212';
+              }}
               className="btn-premium mt-2 w-full"
             >
-              Contact US
+              Contact Us
             </button>
           </div>
         </div>

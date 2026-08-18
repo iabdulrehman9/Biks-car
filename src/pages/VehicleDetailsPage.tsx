@@ -190,10 +190,10 @@ export function VehicleDetailsPage({ id }: { id: string }) {
 
           <button
             type="button"
-            onClick={() => navigate('/marketplace')}
+            onClick={() => navigate('/')}
             className="btn-primary mt-5"
           >
-            Back to Marketplace
+            Back to Home
           </button>
         </div>
       </div>
@@ -230,10 +230,10 @@ export function VehicleDetailsPage({ id }: { id: string }) {
 
           <button
             type="button"
-            onClick={() => navigate('/marketplace')}
+            onClick={() => navigate('/stock')}
             className="text-gray-500 transition-colors hover:text-navy"
           >
-            Marketplace
+            Stock List
           </button>
 
           <span className="text-gray-300">/</span>
@@ -251,11 +251,11 @@ export function VehicleDetailsPage({ id }: { id: string }) {
         {/* Back Button */}
         <button
           type="button"
-          onClick={() => navigate('/marketplace')}
+          onClick={() => navigate('/')}
           className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-navy"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Marketplace
+          Back to Home
         </button>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
@@ -381,22 +381,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                   {vehicleName}
                 </h1>
 
-                {/* Price */}
-                <div className="mt-5 flex flex-wrap items-end gap-2 border-y border-gray-100 py-4">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      FOB Price
-                    </p>
-
-                    <p className="mt-1 text-3xl font-extrabold text-navy">
-                      ${formatUSD(vehicle.price_fob_usd)}
-                    </p>
-                  </div>
-
-                  <span className="mb-1 text-sm text-gray-400">
-                    ≈ ¥{formatJPY(vehicle.price_fob_jpy)}
-                  </span>
-                </div>
+                
 
                 {/* Call CTA */}
                 <div className="mt-5">
@@ -459,7 +444,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
 
                   <li className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 shrink-0 text-gold" />
-                    <span>Secure escrow payment options</span>
+                    <span>Secure payment options</span>
                   </li>
                 </ul>
               </section>

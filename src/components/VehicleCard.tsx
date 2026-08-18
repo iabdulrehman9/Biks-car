@@ -71,12 +71,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
 
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-              FOB Price
-            </p>
-            <p className="text-lg font-extrabold text-navy">
-              ${formatUSD(vehicle.price_fob_usd)}
-            </p>
+            
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-400">
             <MapPin className="h-3.5 w-3.5" />
