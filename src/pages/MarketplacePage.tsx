@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, X, LayoutGrid, LayoutList } from 'lucide-react';
-import { supabase, type Vehicle } from '@/lib/supabase';
+import { fetchVehicles, type Vehicle } from '@/lib/api';
 import { useRouter } from '@/lib/router';
 import { VehicleCard } from '@/components/VehicleCard';
 
@@ -33,11 +33,12 @@ export function MarketplacePage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.from('vehicles').select('*');
-      if (error) {
-        console.error(error);
+      try {
+        const data = await fetchVehicles();
+        setVehicles(data || []);
+      } catch (err) {
+        console.error(err);
       }
-      setVehicles(data || []);
       setLoading(false);
     })();
   }, []);

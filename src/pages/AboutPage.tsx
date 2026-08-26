@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ShieldCheck,
   Globe2,
@@ -9,9 +10,12 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useRouter } from '@/lib/router';
+import heroImage from '@/img/frontImage.jpeg';
+import heroVideo from '@/img/Video.mp4';
 
 export function AboutPage() {
   const { navigate } = useRouter();
+  const [videoReady, setVideoReady] = useState(false);
 
   const values = [
     {
@@ -45,16 +49,31 @@ export function AboutPage() {
           HERO SECTION
       ========================================================= */}
       <section className="group relative isolate flex min-h-[500px] items-center overflow-hidden bg-navy-dark py-12">
-        {/* Background Image & Overlays */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
+        {/* Background Video & Image Crossfade */}
+        <div className="absolute inset-0 -z-10 bg-navy-dark overflow-hidden">
+          {/* Static image — visible until video is ready */}
           <img
-            src="https://images.pexels.com/photos/21234960/pexels-photo-21234960.jpeg?auto=compress&cs=tinysrgb&w=1600"
+            src={heroImage}
             alt="Japanese Vehicle Logistics"
-            className="h-full w-full object-cover object-center opacity-25 transition-transform duration-[12000ms] ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
+            className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1500ms] ease-in-out"
+            style={{ opacity: videoReady ? 0 : 0.7 }}
           />
 
-          <div className="absolute inset-0 bg-gradient-to-r from-navy-dark via-navy-dark/95 to-navy-dark/70" />
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-navy-dark/60 to-transparent" />
+          {/* Video — fades in when buffered */}
+          <video
+            src={heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            onCanPlayThrough={() => setVideoReady(true)}
+            className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[1500ms] ease-in-out"
+            style={{ opacity: videoReady ? 0.7 : 0 }}
+          />
+
+          {/* Gradient Overlays for Text Readability - lighter on the right to show the video */}
+          <div className="absolute inset-0 bg-gradient-to-r from-navy-dark/95 via-navy-dark/70 to-navy-dark/10" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-navy-dark to-transparent" />
           <div className="absolute -right-40 top-1/2 h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         </div>
@@ -133,11 +152,7 @@ export function AboutPage() {
                 <ShieldCheck className="h-4 w-4 text-gold" />
                 Transparent Pricing
               </span>
-              <span className="hidden text-white/20 sm:inline">•</span>
-              <span className="flex items-center gap-2">
-                <Globe2 className="h-4 w-4 text-gold" />
-                Worldwide Logistics
-              </span>
+              
               <span className="hidden text-white/20 sm:inline">•</span>
               <span className="flex items-center gap-2">
                 <Award className="h-4 w-4 text-gold" />

@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { supabase, type Vehicle } from '@/lib/supabase';
+import { fetchVehicle, type Vehicle } from '@/lib/api';
 import { useRouter } from '@/lib/router';
 import {
   formatJPY,
@@ -47,30 +47,31 @@ export function VehicleDetailsPage({ id }: { id: string }) {
   useEffect(() => {
     let mounted = true;
 
-    const fetchVehicle = async () => {
+    const loadVehicle = async () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+      try {
+        const data = await fetchVehicle(id);
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (fetchError) {
-        console.error('Failed to fetch vehicle:', fetchError);
-        setError('Unable to load vehicle details.');
+        if (!data) {
+          setError('Vehicle not found.');
+          setVehicle(null);
+        } else {
+          setVehicle(data);
+        }
+      } catch (err) {
+        if (!mounted) return;
+        setError('Failed to load vehicle details.');
         setVehicle(null);
-      } else {
-        setVehicle(data);
       }
 
-      setLoading(false);
+      if (mounted) setLoading(false);
     };
 
-    fetchVehicle();
+    loadVehicle();
 
     return () => {
       mounted = false;

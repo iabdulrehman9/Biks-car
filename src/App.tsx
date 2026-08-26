@@ -5,6 +5,8 @@ import { HomePage } from '@/pages/HomePage';
 import { MarketplacePage } from '@/pages/MarketplacePage';
 import { VehicleDetailsPage } from '@/pages/VehicleDetailsPage';
 import { AboutPage } from '@/pages/AboutPage';
+import { AdminLoginPage } from '@/pages/AdminLoginPage';
+import { AdminDashboardPage } from '@/pages/AdminDashboardPage';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -22,26 +24,12 @@ function App() {
     page = <VehicleDetailsPage id={params.id} />;
   } else if (path === '/about') {
     page = <AboutPage />;
+  } else if (path === '/admin/login') {
+    showChrome = false;
+    page = <AdminLoginPage />;
   } else if (path === '/admin') {
-    page = (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F5F6F8] px-4 text-center">
-        <div className="max-w-md rounded-xl border border-gray-200 bg-white p-10">
-          <h1 className="text-xl font-extrabold text-navy">
-            Admin ERP
-          </h1>
-          <p className="mt-3 text-sm text-gray-500">
-            This module is part of the BIKS platform roadmap. The public website
-            and vehicle marketplace are fully functional.
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="btn-primary mt-6"
-          >
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
+    showChrome = false;
+    page = <AdminDashboardPage />;
   } else {
     page = (
       <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">

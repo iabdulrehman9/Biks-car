@@ -19,7 +19,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
-import { supabase, type Vehicle } from '@/lib/supabase';
+import { fetchVehicles, type Vehicle } from '@/lib/api';
 import { useRouter } from '@/lib/router';
 import { VehicleCard } from '@/components/VehicleCard';
 import { formatKm } from '@/lib/format';
@@ -41,20 +41,7 @@ export function HomePage() {
 
     const loadVehicles = async () => {
       try {
-        const { data, error } = await supabase
-          .from('vehicles')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Failed to load vehicles:', error);
-
-          if (isMounted) {
-            setVehicles([]);
-          }
-
-          return;
-        }
+        const data = await fetchVehicles();
 
         if (isMounted) {
           setVehicles(data ?? []);
@@ -137,7 +124,7 @@ export function HomePage() {
     </div>
   ) : vehicles.length > 0 ? (
     <Swiper
-      modules={[Navigation, Pagination, Autoplay, EffectFade]}
+      modules={[Pagination, Autoplay, EffectFade]}
       effect="fade"
       fadeEffect={{ crossFade: true }}
       slidesPerView={1}
@@ -147,10 +134,6 @@ export function HomePage() {
         delay: 5000,
         disableOnInteraction: false,
         pauseOnMouseEnter: true,
-      }}
-      navigation={{
-        prevEl: '.hero-slider-prev',
-        nextEl: '.hero-slider-next',
       }}
       pagination={{
         clickable: true,
@@ -296,30 +279,7 @@ export function HomePage() {
       </div>
     </div>
   )}
-
-  {/* Navigation */}
-
-  {vehicles.length > 1 && !loading && (
-    <>
-      <button
-        type="button"
-        className="hero-slider-prev absolute left-4 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-[#071525]/70 text-white backdrop-blur-md transition-all hover:border-gold hover:bg-gold hover:text-navy-dark lg:flex"
-        aria-label="Previous vehicle"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-
-      <button
-        type="button"
-        className="hero-slider-next absolute right-4 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-[#071525]/70 text-white backdrop-blur-md transition-all hover:border-gold hover:bg-gold hover:text-navy-dark lg:flex"
-        aria-label="Next vehicle"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-    </>
-  )}
-</section>
-      {/* =========================================================
+</section>      {/* =========================================================
           ALL VEHICLES INVENTORY
       ========================================================= */}
 

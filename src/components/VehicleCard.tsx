@@ -8,7 +8,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import type { Vehicle } from '@/lib/supabase';
+import type { Vehicle } from '@/lib/api';
 import { formatKm, statusStyles, statusDot } from '@/lib/format';
 import { useRouter } from '@/lib/router';
 
