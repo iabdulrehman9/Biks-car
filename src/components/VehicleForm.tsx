@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
-import type { Vehicle } from '@/lib/api';
+import type { Vehicle, VehicleStatus } from '@/lib/api';
 
 interface VehicleFormProps {
   vehicle?: Vehicle | null;
@@ -195,7 +195,7 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
           </div>
           <div>
             <label className={labelClass}>Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} className={selectClass}>
+            <select value={status} onChange={e => setStatus(e.target.value as VehicleStatus)} className={selectClass}>
               {statuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>

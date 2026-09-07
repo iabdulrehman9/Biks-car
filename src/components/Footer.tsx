@@ -148,30 +148,34 @@ export function Footer() {
 
             <address className="not-italic">
               <ul className="space-y-4">
-                {CONTACT_DETAILS.map(({ type, icon: Icon, content, href }) => (
-                  <li key={type}>
-                    {href ? (
-                      <a
-                        href={href}
-                        className="group flex items-start gap-3 text-sm text-white/65 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D0A030]"
-                      >
-                        <Icon
-                          className="mt-0.5 h-4 w-4 shrink-0 text-[#D0A030]"
-                          aria-hidden="true"
-                        />
-                        <span className="break-words">{content}</span>
-                      </a>
-                    ) : (
-                      <div className="flex items-start gap-3 text-sm text-white/65">
-                        <Icon
-                          className="mt-0.5 h-4 w-4 shrink-0 text-[#D0A030]"
-                          aria-hidden="true"
-                        />
-                        <span className="break-words">{content}</span>
-                      </div>
-                    )}
-                  </li>
-                ))}
+                {CONTACT_DETAILS.map((item) => {
+                  const Icon = item.icon;
+                  const href = 'href' in item ? item.href : undefined;
+                  return (
+                    <li key={item.type}>
+                      {href ? (
+                        <a
+                          href={href}
+                          className="group flex items-start gap-3 text-sm text-white/65 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D0A030]"
+                        >
+                          <Icon
+                            className="mt-0.5 h-4 w-4 shrink-0 text-[#D0A030]"
+                            aria-hidden="true"
+                          />
+                          <span className="break-words">{item.content}</span>
+                        </a>
+                      ) : (
+                        <div className="flex items-start gap-3 text-sm text-white/65">
+                          <Icon
+                            className="mt-0.5 h-4 w-4 shrink-0 text-[#D0A030]"
+                            aria-hidden="true"
+                          />
+                          <span className="break-words">{item.content}</span>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </address>
           </div>

@@ -15,7 +15,7 @@ import { useRouter } from '@/lib/router';
 export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const { navigate } = useRouter();
 
-  const COMPANY_PHONE = '+923369829829';
+  const COMPANY_PHONE = '+819077144212';
 
   const specs = [
     {

@@ -135,7 +135,9 @@ export function AboutPage() {
               </button>
 
               <a
-                href="tel:+923369829829"
+                href="https://wa.me/819077144212"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/[0.06] px-6 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gold/50 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-navy-dark"
               >
                 <Phone className="h-4 w-4 text-gold" />

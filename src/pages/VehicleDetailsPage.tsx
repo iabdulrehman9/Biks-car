@@ -13,6 +13,7 @@ import {
   Ship,
   FileText,
   Zap,
+  Phone,
 } from 'lucide-react';
 
 import { fetchVehicle, type Vehicle } from '@/lib/api';
@@ -25,7 +26,8 @@ import {
   statusStyles,
 } from '@/lib/format';
 
-const COMPANY_PHONE = '+923369829829';
+const COMPANY_PHONE = '+819077144212';
+const WHATSAPP_URL = 'https://wa.me/819077144212';
 
 type VehicleSpec = {
   icon: React.ElementType;
@@ -337,7 +339,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
             </section>
 
             {/* Features */}
-            {vehicle.features?.length > 0 && (
+            {vehicle.features && vehicle.features.length > 0 ? (
               <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
                 <h2 className="text-lg font-bold text-navy">
                   Features & Options
@@ -355,7 +357,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                   ))}
                 </div>
               </section>
-            )}
+            ) : null}
           </div>
 
           {/* ==================================
@@ -384,14 +386,24 @@ export function VehicleDetailsPage({ id }: { id: string }) {
 
                 
 
-                {/* Call CTA */}
-                <div className="mt-5">
+                {/* Inquiry CTAs */}
+                <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Contact BIKS on WhatsApp for vehicle inquiry"
+                    className="btn-premium flex flex-1 items-center justify-center gap-2"
+                  >
+                    <span>WhatsApp Inquiry</span>
+                  </a>
                   <a
                     href={`tel:${COMPANY_PHONE}`}
                     aria-label="Call BIKS for vehicle inquiry"
-                    className="btn-premium flex w-full items-center justify-center gap-2"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-navy/20 bg-white py-3 text-sm font-bold text-navy transition-all hover:bg-gray-50"
                   >
-                    <span>Call for Inquiry</span>
+                    <Phone className="h-4 w-4 text-gold" />
+                    <span>Call Us</span>
                   </a>
                 </div>
               </section>

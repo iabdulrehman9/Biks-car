@@ -10,6 +10,7 @@ const navLinks = [
 ];
 
 const COMPANY_PHONE = '+819077144212';
+const WHATSAPP_URL = 'https://wa.me/819077144212';
 
 export function Navbar() {
   const { route, navigate } = useRouter();
@@ -37,10 +38,6 @@ export function Navbar() {
     return route.path === path || route.path.startsWith(`${path}/`);
   };
 
-  const handleCall = () => {
-    window.location.href = `tel:${COMPANY_PHONE}`;
-  };
-
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
@@ -59,7 +56,7 @@ export function Navbar() {
           </div>
 
           {/* ================= DESKTOP NAVIGATION ================= */}
-          <div className="hidden items-center gap-1 rounded-full border border-slate-200/80 bg-slate-100/60 p-1.5 shadow-inner backdrop-blur-sm lg:flex">
+          <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => {
               const active = isActive(link.path);
 
@@ -68,10 +65,10 @@ export function Navbar() {
                   key={link.path}
                   type="button"
                   onClick={() => navigate(link.path)}
-                  className={`relative flex items-center justify-center rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                  className={`relative px-4 py-2 text-sm font-bold tracking-wide transition-colors ${
                     active
-                      ? 'bg-[#001030] text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-white hover:text-[#001030]'
+                      ? 'text-[#001030]'
+                      : 'text-slate-600 hover:text-[#001030]'
                   }`}
                 >
                   {link.label}
@@ -88,15 +85,16 @@ export function Navbar() {
 
           {/* ================= DESKTOP CTA ================= */}
           <div className="hidden items-center lg:flex">
-            <button
-              type="button"
-              onClick={handleCall}
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-[#D0A030] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#001030] shadow-sm transition-all duration-200 hover:bg-[#c09025] hover:shadow-md active:scale-95"
-              aria-label="Call BIKS Car Trading Company"
+              aria-label="Contact BIKS Car Trading Company on WhatsApp"
             >
               <Phone className="h-4 w-4" />
               <span>Contact Us</span>
-            </button>
+            </a>
           </div>
 
           {/* ================= MOBILE MENU BUTTON ================= */}
@@ -147,15 +145,16 @@ export function Navbar() {
             );
           })}
 
-          <button
-            type="button"
-            onClick={handleCall}
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#D0A030] px-5 py-3 text-sm font-bold uppercase tracking-wider text-[#001030] transition-all hover:bg-[#c09025] active:scale-[0.98]"
-            aria-label="Call BIKS Car Trading Company"
+            aria-label="Contact BIKS Car Trading Company on WhatsApp"
           >
             <Phone className="h-4 w-4" />
             <span>Contact Us</span>
-          </button>
+          </a>
         </div>
       </div>
     </header>

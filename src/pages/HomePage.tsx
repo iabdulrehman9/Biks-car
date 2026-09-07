@@ -460,13 +460,14 @@ export function HomePage() {
 
     {/* CTA Button */}
     <div className="mt-6 flex justify-center">
-      <button
-        type="button"
-        onClick={() => navigate('/contact')}
-        className="btn-premium w-auto px-6 py-2.5 text-sm"
+      <a
+        href="https://wa.me/819077144212"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn-premium inline-flex items-center justify-center w-auto px-6 py-2.5 text-sm"
       >
         Contact Us
-      </button>
+      </a>
     </div>
 
     {/* Trust Labels */}
