@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { login } from '@/lib/api';
 import { useRouter } from '@/lib/router';
 import { Logo } from '@/components/Logo';
 
 export function AdminLoginPage() {
   const { navigate } = useRouter();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export function AdminLoginPage() {
     setLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
       navigate('/admin');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
@@ -61,18 +61,18 @@ export function AdminLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username */}
+            {/* Email */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/50">
-                Username
+                Email
               </label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                 <input
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter admin email (e.g. biksss@gmail.com)"
                   required
                   className="w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 pl-10 pr-4 text-sm text-white placeholder-white/30 transition-all focus:border-gold/50 focus:outline-none focus:ring-1 focus:ring-gold/50"
                 />

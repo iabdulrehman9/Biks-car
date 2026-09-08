@@ -10,7 +10,6 @@ const navLinks = [
 ];
 
 const COMPANY_PHONE = '+819077144212';
-const WHATSAPP_URL = 'https://wa.me/819077144212';
 
 export function Navbar() {
   const { route, navigate } = useRouter();
@@ -86,11 +85,9 @@ export function Navbar() {
           {/* ================= DESKTOP CTA ================= */}
           <div className="hidden items-center lg:flex">
             <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`tel:${COMPANY_PHONE}`}
               className="inline-flex items-center gap-2 rounded-lg bg-[#D0A030] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#001030] shadow-sm transition-all duration-200 hover:bg-[#c09025] hover:shadow-md active:scale-95"
-              aria-label="Contact BIKS Car Trading Company on WhatsApp"
+              aria-label="Call BIKS Car Trading Company"
             >
               <Phone className="h-4 w-4" />
               <span>Contact Us</span>
@@ -146,11 +143,9 @@ export function Navbar() {
           })}
 
           <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`tel:${COMPANY_PHONE}`}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#D0A030] px-5 py-3 text-sm font-bold uppercase tracking-wider text-[#001030] transition-all hover:bg-[#c09025] active:scale-[0.98]"
-            aria-label="Contact BIKS Car Trading Company on WhatsApp"
+            aria-label="Call BIKS Car Trading Company"
           >
             <Phone className="h-4 w-4" />
             <span>Contact Us</span>

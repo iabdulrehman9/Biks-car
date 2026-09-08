@@ -10,6 +10,11 @@ import {
   CheckCircle2,
   X,
   ChevronLeft,
+  Settings,
+  KeyRound,
+  Mail,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   fetchVehicles,
@@ -19,6 +24,8 @@ import {
   isAuthenticated,
   logout,
   getUser,
+  getAdminProfile,
+  updateAdminProfile,
   type Vehicle,
 } from '@/lib/api';
 import { useRouter } from '@/lib/router';
@@ -38,6 +45,15 @@ export function AdminDashboardPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Settings modal states
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsEmail, setSettingsEmail] = useState('');
+  const [settingsPassword, setSettingsPassword] = useState('');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+  const [showSettingsPassword, setShowSettingsPassword] = useState(false);
+  const [currentAdminEmail, setCurrentAdminEmail] = useState(getUser() || '');
 
   // Auth check
   useEffect(() => {
@@ -78,6 +94,56 @@ export function AdminDashboardPage() {
   const handleLogout = () => {
     logout();
     navigate('/admin/login');
+  };
+
+  const handleOpenSettings = async () => {
+    setShowSettings(true);
+    setSettingsError('');
+    setSettingsPassword('');
+    setShowSettingsPassword(false);
+    try {
+      const profile = await getAdminProfile();
+      setSettingsEmail(profile.email);
+      setCurrentAdminEmail(profile.email);
+    } catch {
+      setSettingsEmail(getUser() || '');
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsError('');
+    setSettingsLoading(true);
+
+    try {
+      const payload: { email?: string; password?: string } = {};
+      if (settingsEmail && settingsEmail.trim() !== currentAdminEmail) {
+        payload.email = settingsEmail.trim();
+      }
+      if (settingsPassword && settingsPassword.trim()) {
+        if (settingsPassword.length < 6) {
+          throw new Error('New password must be at least 6 characters long.');
+        }
+        payload.password = settingsPassword.trim();
+      }
+
+      if (!payload.email && !payload.password) {
+        setShowSettings(false);
+        return;
+      }
+
+      const res = await updateAdminProfile(payload);
+      if (res.email) {
+        setCurrentAdminEmail(res.email);
+      }
+      showToast('success', 'Admin credentials updated successfully.');
+      setShowSettings(false);
+      setSettingsPassword('');
+    } catch (err: any) {
+      setSettingsError(err.message || 'Failed to update credentials.');
+    } finally {
+      setSettingsLoading(false);
+    }
   };
 
   const handleAdd = async (formData: FormData) => {
@@ -143,8 +209,16 @@ export function AdminDashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs text-gray-500 sm:block">
-              Logged in as <strong className="text-navy">{getUser()}</strong>
+              Logged in as <strong className="text-navy">{currentAdminEmail}</strong>
             </span>
+            <button
+              onClick={handleOpenSettings}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:border-[#D0A030] hover:text-[#D0A030]"
+              title="Account Settings"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              <span>Settings</span>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
@@ -353,6 +427,101 @@ export function AdminDashboardPage() {
               onCancel={() => { setViewMode('list'); setEditingVehicle(null); }}
               loading={formLoading}
             />
+          </div>
+        )}
+
+        {/* ========== Account Settings Modal ========== */}
+        {showSettings && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy/5 text-navy">
+                    <KeyRound className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-navy">Account Settings</h3>
+                    <p className="text-xs text-gray-500">Directly update your admin email & password</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(false)}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {settingsError && (
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{settingsError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveSettings} className="mt-4 space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700">
+                    Login Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      required
+                      value={settingsEmail}
+                      onChange={(e) => setSettingsEmail(e.target.value)}
+                      placeholder="admin@biks.jp"
+                      className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm text-gray-900 transition-colors focus:border-navy focus:outline-none focus:ring-1 focus:ring-navy"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="mb-1 block text-xs font-semibold text-gray-700">
+                      New Password
+                    </label>
+                    <span className="text-[11px] text-gray-400">Leave blank to keep current</span>
+                  </div>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showSettingsPassword ? 'text' : 'password'}
+                      value={settingsPassword}
+                      onChange={(e) => setSettingsPassword(e.target.value)}
+                      placeholder="Enter new password (min 6 characters)"
+                      className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-10 text-sm text-gray-900 transition-colors focus:border-navy focus:outline-none focus:ring-1 focus:ring-navy"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSettingsPassword(!showSettingsPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showSettingsPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowSettings(false)}
+                    className="rounded-lg border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={settingsLoading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#D0A030] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#001030] shadow-sm transition-all hover:bg-[#c09025] disabled:opacity-60"
+                  >
+                    {settingsLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </main>

@@ -2,7 +2,7 @@
 // BIKS API Client — Replaces Supabase client
 // ============================================================================
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
 
 // ============================================================================
 // Types (unchanged from old supabase.ts)
@@ -100,11 +100,11 @@ export async function deleteVehicle(id: string): Promise<void> {
 // Auth API
 // ============================================================================
 
-export async function login(username: string, password: string): Promise<{ token: string; username: string }> {
+export async function login(email: string, password: string): Promise<{ token: string; email: string }> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Invalid credentials' }));
@@ -112,7 +112,46 @@ export async function login(username: string, password: string): Promise<{ token
   }
   const data = await res.json();
   localStorage.setItem('biks_token', data.token);
-  localStorage.setItem('biks_user', data.username);
+  localStorage.setItem('biks_user', data.email);
+  return data;
+}
+
+export async function getAdminProfile(): Promise<{ email: string }> {
+  const res = await fetch(`${API_BASE}/auth/profile`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to fetch profile' }));
+    throw new Error(err.error || 'Failed to fetch profile');
+  }
+  return res.json();
+}
+
+export async function updateAdminProfile(payload: {
+  email?: string;
+  password?: string;
+}): Promise<{ message: string; email: string; token: string }> {
+  const res = await fetch(`${API_BASE}/auth/profile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to update credentials' }));
+    throw new Error(err.error || 'Failed to update credentials');
+  }
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('biks_token', data.token);
+  }
+  if (data.email) {
+    localStorage.setItem('biks_user', data.email);
+  }
   return data;
 }
 
