@@ -2,7 +2,8 @@
 // BIKS API Client — Replaces Supabase client
 // ============================================================================
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_BASE = (isLocal ? 'http://localhost:5000' : (import.meta.env.VITE_API_URL || 'https://biks-car.onrender.com')).replace(/\/+$/, '') + '/api';
 
 // ============================================================================
 // Types (unchanged from old supabase.ts)
@@ -15,6 +16,7 @@ export interface Vehicle {
   make: string;
   model: string;
   year: number;
+  category?: string | null;
   body_type: string | null;
   transmission: string | null;
   fuel_type: string | null;
@@ -40,13 +42,53 @@ export interface Vehicle {
 // Vehicle API
 // ============================================================================
 
-export async function fetchVehicles(): Promise<Vehicle[]> {
+// ============================================================================
+// In-Memory SWR Cache for Performance
+// ============================================================================
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+let vehiclesCache: CacheEntry<Vehicle[]> | null = null;
+let categoriesCache: CacheEntry<Category[]> | null = null;
+const CACHE_TTL_MS = 60000; // 60s cache for lightning-fast loads
+
+export function invalidateVehiclesCache(): void {
+  vehiclesCache = null;
+}
+
+export function invalidateCategoriesCache(): void {
+  categoriesCache = null;
+}
+
+export async function fetchVehicles(forceFresh = false): Promise<Vehicle[]> {
+  const now = Date.now();
+  if (!forceFresh && vehiclesCache && (now - vehiclesCache.timestamp < CACHE_TTL_MS)) {
+    // Return instant cached data and revalidate silently if older than 15s
+    if (now - vehiclesCache.timestamp > 15000) {
+      fetch(`${API_BASE}/vehicles`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => { if (data) vehiclesCache = { data, timestamp: Date.now() }; })
+        .catch(() => {});
+    }
+    return vehiclesCache.data;
+  }
+
   const res = await fetch(`${API_BASE}/vehicles`);
   if (!res.ok) throw new Error('Failed to fetch vehicles');
-  return res.json();
+  const data = await res.json();
+  vehiclesCache = { data, timestamp: Date.now() };
+  return data;
 }
 
 export async function fetchVehicle(id: string): Promise<Vehicle | null> {
+  // Quick check in cache first
+  if (vehiclesCache) {
+    const cached = vehiclesCache.data.find(v => v.id === id);
+    if (cached) return cached;
+  }
   const res = await fetch(`${API_BASE}/vehicles/${id}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error('Failed to fetch vehicle');
@@ -54,51 +96,243 @@ export async function fetchVehicle(id: string): Promise<Vehicle | null> {
 }
 
 export async function createVehicle(formData: FormData): Promise<Vehicle> {
-  const res = await fetch(`${API_BASE}/vehicles`, {
+  const res = await authFetch('/vehicles', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
     body: formData,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+    const err = await res.json().catch(() => ({ error: 'Failed to create vehicle' }));
     throw new Error(err.error || 'Failed to create vehicle');
   }
+  invalidateVehiclesCache();
   return res.json();
 }
 
 export async function updateVehicle(id: string, formData: FormData): Promise<Vehicle> {
-  const res = await fetch(`${API_BASE}/vehicles/${id}`, {
+  const res = await authFetch(`/vehicles/${id}`, {
     method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
     body: formData,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+    const err = await res.json().catch(() => ({ error: 'Failed to update vehicle' }));
     throw new Error(err.error || 'Failed to update vehicle');
   }
+  invalidateVehiclesCache();
   return res.json();
 }
 
 export async function deleteVehicle(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/vehicles/${id}`, {
+  const res = await authFetch(`/vehicles/${id}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+    const err = await res.json().catch(() => ({ error: 'Failed to delete vehicle' }));
     throw new Error(err.error || 'Failed to delete vehicle');
   }
+  invalidateVehiclesCache();
 }
 
 // ============================================================================
-// Auth API
+// Categories API
 // ============================================================================
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  order: number;
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const now = Date.now();
+  if (categoriesCache && (now - categoriesCache.timestamp < CACHE_TTL_MS)) {
+    return categoriesCache.data;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/categories`);
+    if (!res.ok) throw new Error('Failed to fetch categories');
+    const data = await res.json();
+    categoriesCache = { data, timestamp: Date.now() };
+    return data;
+  } catch (err) {
+    console.error('Error fetching categories from API, using fallback defaults:', err);
+    return [
+      { id: '1', name: 'Trucks', slug: 'trucks', order: 1 },
+      { id: '2', name: 'Cars', slug: 'cars', order: 2 },
+      { id: '3', name: 'Tyre Shover', slug: 'tyre-shover', order: 3 },
+      { id: '4', name: 'Forklifts', slug: 'forklifts', order: 4 },
+      { id: '5', name: 'Agricultural Machines', slug: 'agricultural-machines', order: 5 },
+      { id: '6', name: 'Truck Fixtures', slug: 'truck-fixtures', order: 6 },
+      { id: '7', name: 'Other Parts', slug: 'other-parts', order: 7 },
+    ];
+  }
+}
+
+export async function createCategory(name: string): Promise<Category> {
+  const res = await authFetch('/categories', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to create category' }));
+    throw new Error(err.error || 'Failed to create category');
+  }
+  invalidateCategoriesCache();
+  return res.json();
+}
+
+export async function updateCategory(id: string, name: string): Promise<Category> {
+  const res = await authFetch(`/categories/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to update category' }));
+    throw new Error(err.error || 'Failed to update category');
+  }
+  invalidateCategoriesCache();
+  invalidateVehiclesCache();
+  return res.json();
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  const res = await authFetch(`/categories/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to delete category' }));
+    throw new Error(err.error || 'Failed to delete category');
+  }
+  invalidateCategoriesCache();
+  invalidateVehiclesCache();
+}
+
+// ============================================================================
+// Auth & Token Management API
+// ============================================================================
+
+export function getToken(): string | null {
+  return localStorage.getItem('biks_token');
+}
+
+export function getUser(): string | null {
+  return localStorage.getItem('biks_user');
+}
+
+export function logout(): void {
+  localStorage.removeItem('biks_token');
+  localStorage.removeItem('biks_user');
+  invalidateVehiclesCache();
+  invalidateCategoriesCache();
+}
+
+export function isAuthenticated(): boolean {
+  return !!getToken();
+}
+
+/**
+ * Checks if a JWT token is expired or within margin of expiring.
+ */
+export function isTokenExpiredOrNearExp(token: string | null, marginSeconds = 300): boolean {
+  if (!token) return true;
+  try {
+    const payloadBase64 = token.split('.')[1];
+    if (!payloadBase64) return true;
+    const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(decodedJson);
+    if (!payload.exp) return false;
+    const nowSec = Math.floor(Date.now() / 1000);
+    return (payload.exp - nowSec) < marginSeconds;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Exchange current token for a fresh 30-day token.
+ */
+export async function refreshToken(): Promise<string | null> {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem('biks_token', data.token);
+      if (data.email) localStorage.setItem('biks_user', data.email);
+      return data.token;
+    }
+    return null;
+  } catch (err) {
+    console.error('Failed to auto-refresh token:', err);
+    return null;
+  }
+}
+
+/**
+ * Returns a guaranteed valid token, automatically refreshing if close to expiry.
+ */
+export async function getValidToken(): Promise<string | null> {
+  const token = getToken();
+  if (!token) return null;
+  if (isTokenExpiredOrNearExp(token)) {
+    const refreshed = await refreshToken();
+    if (refreshed) return refreshed;
+  }
+  return token;
+}
+
+/**
+ * Authenticated fetch with automatic token injection, silent auto-refresh, and retry.
+ */
+export async function authFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  let token = await getValidToken();
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  let res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  // If 401, attempt silent refresh once and retry transparently
+  if (res.status === 401) {
+    const freshToken = await refreshToken();
+    if (freshToken) {
+      headers.set('Authorization', `Bearer ${freshToken}`);
+      res = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    }
+
+    // If still 401, notify UI to show non-intrusive re-auth modal without losing form inputs
+    if (res.status === 401) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('biks:session_expired'));
+      }
+    }
+  }
+
+  return res;
+}
 
 export async function login(email: string, password: string): Promise<{ token: string; email: string }> {
   const res = await fetch(`${API_BASE}/auth/login`, {
@@ -117,11 +351,7 @@ export async function login(email: string, password: string): Promise<{ token: s
 }
 
 export async function getAdminProfile(): Promise<{ email: string }> {
-  const res = await fetch(`${API_BASE}/auth/profile`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  });
+  const res = await authFetch('/auth/profile');
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to fetch profile' }));
     throw new Error(err.error || 'Failed to fetch profile');
@@ -133,11 +363,10 @@ export async function updateAdminProfile(payload: {
   email?: string;
   password?: string;
 }): Promise<{ message: string; email: string; token: string }> {
-  const res = await fetch(`${API_BASE}/auth/profile`, {
+  const res = await authFetch('/auth/profile', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(payload),
   });
@@ -155,25 +384,8 @@ export async function updateAdminProfile(payload: {
   return data;
 }
 
-export function getToken(): string | null {
-  return localStorage.getItem('biks_token');
-}
-
-export function getUser(): string | null {
-  return localStorage.getItem('biks_user');
-}
-
-export function logout(): void {
-  localStorage.removeItem('biks_token');
-  localStorage.removeItem('biks_user');
-}
-
-export function isAuthenticated(): boolean {
-  return !!getToken();
-}
-
 export async function verifyToken(): Promise<boolean> {
-  const token = getToken();
+  const token = await getValidToken();
   if (!token) return false;
   try {
     const res = await fetch(`${API_BASE}/auth/verify`, {

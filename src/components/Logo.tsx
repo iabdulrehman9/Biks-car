@@ -1,8 +1,8 @@
 import React from 'react';
+import biksLogo from '../img/biks-logo.png';
 
 interface LogoProps {
   variant?: 'dark' | 'light';
-  /** Height class for the logo (e.g., 'h-10', 'h-12 lg:h-14') */
   size?: string;
   showText?: boolean;
   onClick?: () => void;
@@ -10,19 +10,14 @@ interface LogoProps {
 }
 
 export function Logo({
-  variant = 'dark',
-  size = 'h-10 sm:h-12 lg:h-14',
+  size = 'h-10 sm:h-12',
   onClick,
   className = '',
 }: LogoProps) {
-  const isLight = variant === 'light';
-
   const containerClasses = [
     'group inline-flex items-center select-none',
-    'rounded-lg p-1 -m-1',
-    'text-left transition-all duration-200 ease-in-out',
+    'rounded-lg transition-all duration-200 ease-in-out',
     'outline-none focus-visible:ring-2 focus-visible:ring-[#D0A030]',
-    isLight ? 'focus-visible:ring-offset-[#001030]' : 'focus-visible:ring-offset-white',
     onClick ? 'cursor-pointer' : '',
     className,
   ]
@@ -31,17 +26,9 @@ export function Logo({
 
   const content = (
     <img
-      src="/BIKS Trading Company.png"
+      src={biksLogo}
       alt="BIKS Trading Company"
-      className={`
-        ${size}
-        w-auto
-        object-contain
-        transition-transform
-        duration-300
-        ease-out
-        group-hover:scale-105
-      `}
+      className={`${size} w-auto object-contain shrink-0 transition-transform duration-300 group-hover:scale-105`}
     />
   );
 
@@ -50,7 +37,7 @@ export function Logo({
       <button
         type="button"
         onClick={onClick}
-        aria-label="BIKS Trading Company - Go to homepage"
+        aria-label="BIKS Trading Company — Go to homepage"
         className={containerClasses}
       >
         {content}

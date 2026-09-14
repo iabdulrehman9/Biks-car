@@ -1,7 +1,9 @@
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { useRouter, matchRoute } from '@/lib/router';
+import { AdminLanguageProvider } from '@/lib/i18n';
 import { HomePage } from '@/pages/HomePage';
+import { CollectionPage } from '@/pages/CollectionPage';
 import { MarketplacePage } from '@/pages/MarketplacePage';
 import { VehicleDetailsPage } from '@/pages/VehicleDetailsPage';
 import { AboutPage } from '@/pages/AboutPage';
@@ -17,8 +19,8 @@ function App() {
 
   if (path === '/' || path === '') {
     page = <HomePage />;
-  } else if (path === '/marketplace') {
-    page = <MarketplacePage />;
+  } else if (path === '/collection' || path === '/marketplace') {
+    page = <CollectionPage />;
   } else if (matchRoute(path, '/vehicle/:id')) {
     const params = matchRoute(path, '/vehicle/:id')!;
     page = <VehicleDetailsPage id={params.id} />;
@@ -26,10 +28,18 @@ function App() {
     page = <AboutPage />;
   } else if (path === '/admin/login') {
     showChrome = false;
-    page = <AdminLoginPage />;
+    page = (
+      <AdminLanguageProvider>
+        <AdminLoginPage />
+      </AdminLanguageProvider>
+    );
   } else if (path === '/admin') {
     showChrome = false;
-    page = <AdminDashboardPage />;
+    page = (
+      <AdminLanguageProvider>
+        <AdminDashboardPage />
+      </AdminLanguageProvider>
+    );
   } else {
     page = (
       <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">

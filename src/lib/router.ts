@@ -6,24 +6,50 @@ export interface RouteState {
   query: URLSearchParams;
 }
 
-function parseHash(): RouteState {
-  const hash = window.location.hash.replace(/^#/, '') || '/';
-  const [path, queryString] = hash.split('?');
-  const query = new URLSearchParams(queryString || '');
-  return { path, params: {}, query };
+function parseLocation(): RouteState {
+  let pathname = window.location.pathname || '/';
+  let search = window.location.search || '';
+
+  // Handle legacy hash URLs gracefully (e.g. /#/admin or /#/collection?category=Trucks)
+  if (typeof window !== 'undefined' && window.location.hash && window.location.hash.startsWith('#/')) {
+    const legacy = window.location.hash.replace(/^#/, '');
+    const [legacyPath, legacySearch] = legacy.split('?');
+    pathname = legacyPath || '/';
+    search = legacySearch ? `?${legacySearch}` : search;
+    try {
+      window.history.replaceState(null, '', pathname + search);
+    } catch (e) {}
+  }
+
+  // Normalize trailing slash (except root '/')
+  if (pathname.length > 1 && pathname.endsWith('/')) {
+    pathname = pathname.slice(0, -1);
+  }
+
+  const query = new URLSearchParams(search);
+  return { path: pathname, params: {}, query };
 }
 
 export function useRouter() {
-  const [route, setRoute] = useState<RouteState>(parseHash());
+  const [route, setRoute] = useState<RouteState>(() => parseLocation());
 
   useEffect(() => {
-    const onHashChange = () => setRoute(parseHash());
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+    const onLocationChange = () => setRoute(parseLocation());
+    window.addEventListener('popstate', onLocationChange);
+    window.addEventListener('biks:route_change', onLocationChange);
+
+    return () => {
+      window.removeEventListener('popstate', onLocationChange);
+      window.removeEventListener('biks:route_change', onLocationChange);
+    };
   }, []);
 
   const navigate = useCallback((to: string) => {
-    window.location.hash = to;
+    const current = window.location.pathname + window.location.search;
+    if (to !== current) {
+      window.history.pushState(null, '', to);
+      window.dispatchEvent(new Event('biks:route_change'));
+    }
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, []);
 

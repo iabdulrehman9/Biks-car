@@ -1,17 +1,8 @@
 import type { MouseEvent } from 'react';
-import {Smartphone, Phone, MapPin, Globe, ArrowUpRight, Mail, Printer } from 'lucide-react';
+import { Smartphone, Phone, MapPin, Globe, ArrowUpRight, Mail, Printer } from 'lucide-react';
 import { Logo } from './Logo';
 import { useRouter } from '@/lib/router';
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const COMPANY_LINKS = [
-  { label: 'Home', path: '/' },
-  { label: 'About Us', path: '/about' },
-  
-] as const;
+import { useTranslation } from '@/lib/i18n';
 
 const CONTACT_DETAILS = [
   {
@@ -60,21 +51,33 @@ const SOCIAL_LINKS = [
   },
 ] as const;
 
-const DEVELOPER_LINK = 'https://www.linkedin.com/in/abdul-rehman-526332214/';
-
-// ============================================================================
-// Component
-// ============================================================================
+const DEVELOPER_LINK = 'https://www.instagram.com/aiwalogic?stkn=ZG5jcmVrenFhZ2lk';
 
 export function Footer() {
   const { navigate } = useRouter();
+  const { t, categoryLabel } = useTranslation();
 
   const handleNavigation = (event: MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!path.startsWith('/')) return;
-
     event.preventDefault();
     navigate(path);
   };
+
+  const companyLinks = [
+    { label: t('nav.home', 'Home'), path: '/' },
+    { label: t('nav.collection', 'Collection'), path: '/collection' },
+    { label: t('nav.about', 'About Us'), path: '/about' },
+  ];
+
+  const popularCategories = [
+    'Trucks',
+    'Cars',
+    'Tyre Shover',
+    'Forklifts',
+    'Agricultural Machines',
+    'Truck Fixtures',
+    'Other Parts',
+  ];
 
   return (
     <footer className="border-t border-white/10 bg-[#001030] text-white">
@@ -84,7 +87,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-12 md:gap-8 lg:gap-12">
           
           {/* Brand Info */}
-          <div className="flex flex-col items-start sm:col-span-2 md:col-span-12 lg:col-span-5">
+          <div className="flex flex-col items-start sm:col-span-2 md:col-span-12 lg:col-span-4">
             <div className="inline-flex">
               <Logo 
                 variant="light" 
@@ -93,8 +96,7 @@ export function Footer() {
             </div>
 
             <p className="mt-4 max-w-md text-sm leading-6 text-white/65 sm:mt-5 sm:leading-7">
-              BIKS Car Trading Company is a trusted Japanese vehicle exporter, supplying high-quality
-              new and used vehicles worldwide with reliable inspection, shipping, and export services.
+              {t('footer.about', 'BIKS Trading Company is a trusted Japanese vehicle exporter, supplying high-quality new and used vehicles worldwide with reliable inspection, shipping, and export services.')}
             </p>
 
             {/* Social Links */}
@@ -116,13 +118,13 @@ export function Footer() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="md:col-span-5 lg:col-span-3" aria-label="Company navigation">
+          <nav className="md:col-span-3 lg:col-span-2" aria-label="Company navigation">
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#D0A030] sm:mb-5">
-              Company
+              {t('footer.quickLinks', 'Quick Links')}
             </h2>
 
             <ul className="space-y-3">
-              {COMPANY_LINKS.map(({ label, path }) => (
+              {companyLinks.map(({ label, path }) => (
                 <li key={path}>
                   <a
                     href={path}
@@ -140,14 +142,38 @@ export function Footer() {
             </ul>
           </nav>
 
-          {/* Contact Details */}
-          <div className="md:col-span-7 lg:col-span-4">
+          {/* Popular Categories */}
+          <nav className="md:col-span-4 lg:col-span-3" aria-label="Popular Categories">
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#D0A030] sm:mb-5">
-              Contact Us
+              {t('footer.categories', 'Categories')}
+            </h2>
+
+            <ul className="space-y-2">
+              {popularCategories.map((cat) => (
+                <li key={cat}>
+                  <a
+                    href={`/#/collection?category=${encodeURIComponent(cat)}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/collection?category=${encodeURIComponent(cat)}`);
+                    }}
+                    className="text-xs text-white/60 hover:text-[#D0A030] transition-colors"
+                  >
+                    {categoryLabel(cat)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Contact Details */}
+          <div className="md:col-span-5 lg:col-span-3">
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#D0A030] sm:mb-5">
+              {t('footer.contactInfo', 'Contact Information')}
             </h2>
 
             <address className="not-italic">
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {CONTACT_DETAILS.map((item) => {
                   const Icon = item.icon;
                   const href = 'href' in item ? item.href : undefined;
@@ -156,21 +182,31 @@ export function Footer() {
                       {href ? (
                         <a
                           href={href}
-                          className="group flex items-start gap-3 text-sm text-white/65 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D0A030]"
+                          className="group flex items-start gap-2.5 text-xs text-white/65 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D0A030]"
                         >
                           <Icon
-                            className="mt-0.5 h-4 w-4 shrink-0 text-[#D0A030]"
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D0A030]"
                             aria-hidden="true"
                           />
                           <span className="break-words">{item.content}</span>
                         </a>
                       ) : (
-                        <div className="flex items-start gap-3 text-sm text-white/65">
+                        <div className="flex items-start gap-2.5 text-xs text-white/65">
                           <Icon
-                            className="mt-0.5 h-4 w-4 shrink-0 text-[#D0A030]"
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D0A030]"
                             aria-hidden="true"
                           />
-                          <span className="break-words">{item.content}</span>
+                          {item.type === 'address' ? (
+                            <span className="break-words leading-relaxed">
+                              {t('footer.addressLine1', '1315-15 Morokawa,')}
+                              <br />
+                              {t('footer.addressLine2', 'Koga, Ibaraki 306-0126,')}
+                              <br />
+                              {t('footer.addressLine3', 'Japan')}
+                            </span>
+                          ) : (
+                            <span className="break-words">{item.content}</span>
+                          )}
                         </div>
                       )}
                     </li>
@@ -184,7 +220,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:pt-7">
           <p className="text-left">
-            © {new Date().getFullYear()} BIKS Car Trading Company. All rights reserved.
+            © {new Date().getFullYear()} BIKS Trading Company. {t('footer.rights', 'All rights reserved.')}
           </p>
 
           <p className="text-left sm:text-right">

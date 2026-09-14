@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
-import { Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
-import type { Vehicle, VehicleStatus } from '@/lib/api';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, X, Plus, Image as ImageIcon, Check } from 'lucide-react';
+import { type Vehicle, type VehicleStatus, fetchCategories, createCategory } from '@/lib/api';
+import { useAdminTranslation } from '@/lib/i18n';
 
 interface VehicleFormProps {
   vehicle?: Vehicle | null;
@@ -15,9 +16,23 @@ const transmissions = ['Automatic', 'Manual'];
 const statuses = ['Available', 'Reserved', 'Sold', 'In Transit', 'Delivered'];
 
 export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFormProps) {
+  const { t, categoryLabel } = useAdminTranslation();
   const [make, setMake] = useState(vehicle?.make || '');
   const [model, setModel] = useState(vehicle?.model || '');
   const [year, setYear] = useState(vehicle?.year?.toString() || '');
+  const [category, setCategory] = useState(vehicle?.category || 'Cars');
+  const [categories, setCategories] = useState<string[]>([
+    'Trucks',
+    'Cars',
+    'Tyre Shover',
+    'Forklifts',
+    'Agricultural Machines',
+    'Truck Fixtures',
+    'Other Parts',
+  ]);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [bodyType, setBodyType] = useState(vehicle?.body_type || '');
   const [transmission, setTransmission] = useState(vehicle?.transmission || '');
   const [fuelType, setFuelType] = useState(vehicle?.fuel_type || '');
@@ -80,6 +95,37 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
     setFeatures(prev => prev.filter((_, i) => i !== index));
   };
 
+  useEffect(() => {
+    fetchCategories().then(cats => {
+      if (cats && cats.length > 0) {
+        setCategories(prev => Array.from(new Set([...prev, ...cats.map(c => c.name)])));
+      }
+    }).catch(err => console.error('Error fetching categories in form:', err));
+  }, []);
+
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    setCreatingCategory(true);
+    try {
+      const created = await createCategory(trimmed);
+      setCategories(prev => Array.from(new Set([...prev, created.name])));
+      setCategory(created.name);
+      setNewCategoryName('');
+      setIsAddingCategory(false);
+    } catch (err) {
+      console.error('Error creating category:', err);
+      // Local fallback
+      setCategories(prev => Array.from(new Set([...prev, trimmed])));
+      setCategory(trimmed);
+      setNewCategoryName('');
+      setIsAddingCategory(false);
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -87,6 +133,7 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
     formData.append('make', make);
     formData.append('model', model);
     formData.append('year', year);
+    formData.append('category', category);
     if (bodyType) formData.append('body_type', bodyType);
     if (transmission) formData.append('transmission', transmission);
     if (fuelType) formData.append('fuel_type', fuelType);
@@ -143,6 +190,64 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
             <label className={labelClass}>Year *</label>
             <input type="number" value={year} onChange={e => setYear(e.target.value)} required min="1980" max="2030" placeholder="e.g. 2022" className={inputClass} />
           </div>
+
+          {/* Category */}
+          <div className="sm:col-span-2 lg:col-span-3">
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className={labelClass}>Category *</label>
+              {!isAddingCategory ? (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingCategory(true)}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-[#D0A030] hover:underline"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{t('form.addCategory', 'Add New Category')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setIsAddingCategory(false); setNewCategoryName(''); }}
+                  className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+
+            {isAddingCategory ? (
+              <div className="flex items-center gap-2 rounded-lg border border-[#D0A030] bg-amber-50/50 p-2">
+                <input
+                  type="text"
+                  placeholder="Enter new category name (e.g. Excavators)..."
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-[#001030] focus:outline-none"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCreateCategory()}
+                  disabled={creatingCategory || !newCategoryName.trim()}
+                  className="rounded-md bg-[#001030] px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {creatingCategory ? 'Saving...' : 'Save & Select'}
+                </button>
+              </div>
+            ) : (
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className={selectClass}
+                required
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
           <div>
             <label className={labelClass}>Body Type</label>
             <select value={bodyType} onChange={e => setBodyType(e.target.value)} className={selectClass}>
@@ -219,7 +324,7 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
                 onChange={e => setFeatured(e.target.checked)}
                 className="h-5 w-5 rounded border-gray-300 text-gold accent-gold focus:ring-gold"
               />
-              <span className="text-sm font-semibold text-navy">Featured Vehicle</span>
+              <span className="text-sm font-semibold text-navy">{t('form.featured', 'Featured Vehicle')}</span>
             </label>
           </div>
         </div>
@@ -382,7 +487,7 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
           disabled={loading || !make || !model || !year}
           className="rounded-lg bg-gold px-8 py-2.5 text-sm font-bold text-navy-dark shadow-sm transition-all hover:-translate-y-0.5 hover:bg-gold/90 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
-          {loading ? 'Saving...' : vehicle ? 'Update Vehicle' : 'Add Vehicle'}
+          {loading ? t('form.updating', 'Saving...') : t('form.save', 'Save Vehicle')}
         </button>
       </div>
     </form>

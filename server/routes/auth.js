@@ -58,11 +58,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
-    // Generate JWT
+    // Generate JWT with extended 30-day lifespan
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: admin.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '30d' }
     );
 
     res.json({ token, email: admin.email, role: admin.role });
@@ -124,11 +124,11 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     await admin.save();
 
-    // Re-issue a fresh JWT with updated email
+    // Re-issue a fresh JWT with updated email (30d)
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: admin.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '30d' }
     );
 
     res.json({
@@ -139,6 +139,56 @@ router.put('/profile', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error updating admin profile:', err);
     res.status(500).json({ error: 'Failed to update credentials.' });
+  }
+});
+
+// POST /api/auth/refresh — Refresh an expiring or recently expired token
+router.post('/refresh', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let token = req.body.token;
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided for refresh.' });
+    }
+
+    // Decode even if expired
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    } catch (e) {
+      return res.status(401).json({ error: 'Invalid token signature.' });
+    }
+
+    // Disallow refreshing tokens expired for more than 14 days
+    const nowInSec = Math.floor(Date.now() / 1000);
+    if (decoded.exp && (nowInSec - decoded.exp > 14 * 24 * 3600)) {
+      return res.status(401).json({ error: 'Token expired too long ago. Please log in again.' });
+    }
+
+    // Verify admin still exists in DB
+    const admin = await Admin.findById(decoded.id);
+    if (!admin) {
+      return res.status(401).json({ error: 'Admin account no longer exists.' });
+    }
+
+    const freshToken = jwt.sign(
+      { id: admin._id, email: admin.email, role: admin.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.json({
+      token: freshToken,
+      email: admin.email,
+      role: admin.role,
+    });
+  } catch (err) {
+    console.error('Token refresh error:', err);
+    res.status(500).json({ error: 'Failed to refresh token.' });
   }
 });
 

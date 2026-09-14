@@ -4,6 +4,7 @@ const vehicleSchema = new mongoose.Schema({
   make: { type: String, required: true },
   model: { type: String, required: true },
   year: { type: Number, required: true },
+  category: { type: String, default: 'Cars' },
   body_type: { type: String, default: null },
   transmission: { type: String, default: null },
   fuel_type: { type: String, default: null },

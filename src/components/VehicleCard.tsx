@@ -11,9 +11,11 @@ import {
 import type { Vehicle } from '@/lib/api';
 import { formatKm, statusStyles, statusDot } from '@/lib/format';
 import { useRouter } from '@/lib/router';
+import { useTranslation } from '@/lib/i18n';
 
 export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const { navigate } = useRouter();
+  const { t, translateCat, translateSt, translateTrans, translateF } = useTranslation();
 
   const COMPANY_PHONE = '+819077144212';
 
@@ -32,12 +34,12 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
     },
     {
       icon: Fuel,
-      label: vehicle.fuel_type || '—',
+      label: translateF(vehicle.fuel_type) || '—',
       title: 'Fuel',
     },
     {
       icon: Settings2,
-      label: vehicle.transmission || '—',
+      label: translateTrans(vehicle.transmission) || '—',
       title: 'Transmission',
     },
   ];
@@ -86,6 +88,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
               group-hover:scale-[1.06]
             "
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gray-100 text-sm font-medium text-gray-400">
@@ -105,25 +108,19 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           "
         />
 
-        {/* Featured */}
-        {vehicle.featured && (
-          <span
-            className="
-              absolute left-3 top-3
-              rounded-md
-              bg-gold
-              px-2.5 py-1
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-wider
-              text-navy-dark
-              shadow-sm
-            "
-          >
-            Featured
-          </span>
-        )}
+        {/* Category & Featured Badges */}
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5 z-10">
+          {vehicle.category && (
+            <span className="rounded-md bg-[#001030]/85 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#D0A030] shadow-sm backdrop-blur-sm">
+              {translateCat(vehicle.category)}
+            </span>
+          )}
+          {vehicle.featured && (
+            <span className="rounded-md bg-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-navy-dark shadow-sm">
+              Featured
+            </span>
+          )}
+        </div>
 
         {/* Status */}
         <span
@@ -152,7 +149,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             `}
           />
 
-          {vehicle.status}
+          {translateSt(vehicle.status)}
         </span>
 
         {/* View details hover indicator */}
@@ -268,7 +265,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           >
             <Phone className="h-4 w-4" />
 
-            <span>Call</span>
+            <span>{t('details.callUs', 'Call')}</span>
           </a>
 
           {/* View Details */}
@@ -299,7 +296,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
               focus:ring-offset-2
             "
           >
-            <span>View Details</span>
+            <span>{t('home.viewDetails', 'View Details')}</span>
 
             <ArrowRight
               className="

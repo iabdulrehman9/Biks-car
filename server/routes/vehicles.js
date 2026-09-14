@@ -2,13 +2,14 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 const Vehicle = require('../models/Vehicle');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
 // ============================================================================
-// Multer Configuration for Image Uploads
+// Multer Configuration with Sharp WebP Processing
 // ============================================================================
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -16,16 +17,8 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `vehicle-${uniqueSuffix}${ext}`);
-  },
-});
+// Memory storage for fast streaming into Sharp
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -39,8 +32,30 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB upload limit, compressed down to ~150KB
 });
+
+/**
+ * Optimizes an uploaded buffer to high-efficiency WebP format.
+ */
+async function processAndSaveImage(fileBuffer, prefix = 'vehicle') {
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  const filename = `${prefix}-${uniqueSuffix}.webp`;
+  const destPath = path.join(uploadsDir, filename);
+
+  await sharp(fileBuffer)
+    .rotate() // Automatically orient based on EXIF
+    .resize({
+      width: 1600,
+      height: 1200,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 82, effort: 4 })
+    .toFile(destPath);
+
+  return filename;
+}
 
 // Helper: build full URL for an uploaded file
 function getImageUrl(req, filename) {
@@ -135,14 +150,18 @@ router.post('/',
         vehicleData.price_fob_usd = parseFloat(vehicleData.price_fob_usd);
       }
 
-      // Handle uploaded main image
+      // Handle uploaded main image (compressed to WebP)
       if (req.files && req.files.main_image && req.files.main_image[0]) {
-        vehicleData.image_url = getImageUrl(req, req.files.main_image[0].filename);
+        const filename = await processAndSaveImage(req.files.main_image[0].buffer, 'vehicle-main');
+        vehicleData.image_url = getImageUrl(req, filename);
       }
 
-      // Handle uploaded gallery images
-      if (req.files && req.files.gallery_images) {
-        const uploadedGallery = req.files.gallery_images.map(f => getImageUrl(req, f.filename));
+      // Handle uploaded gallery images (compressed to WebP)
+      if (req.files && req.files.gallery_images && req.files.gallery_images.length > 0) {
+        const galleryFilenames = await Promise.all(
+          req.files.gallery_images.map(f => processAndSaveImage(f.buffer, 'vehicle-gallery'))
+        );
+        const uploadedGallery = galleryFilenames.map(fn => getImageUrl(req, fn));
         vehicleData.gallery = [...(vehicleData.gallery || []), ...uploadedGallery];
       }
 
@@ -205,16 +224,20 @@ router.put('/:id',
         updateData.price_fob_usd = parseFloat(updateData.price_fob_usd);
       }
 
-      // Handle uploaded main image
+      // Handle uploaded main image (compressed to WebP)
       if (req.files && req.files.main_image && req.files.main_image[0]) {
         // Delete old main image if it was a local upload
         deleteLocalFile(vehicle.image_url);
-        updateData.image_url = getImageUrl(req, req.files.main_image[0].filename);
+        const filename = await processAndSaveImage(req.files.main_image[0].buffer, 'vehicle-main');
+        updateData.image_url = getImageUrl(req, filename);
       }
 
-      // Handle uploaded gallery images
-      if (req.files && req.files.gallery_images) {
-        const uploadedGallery = req.files.gallery_images.map(f => getImageUrl(req, f.filename));
+      // Handle uploaded gallery images (compressed to WebP)
+      if (req.files && req.files.gallery_images && req.files.gallery_images.length > 0) {
+        const galleryFilenames = await Promise.all(
+          req.files.gallery_images.map(f => processAndSaveImage(f.buffer, 'vehicle-gallery'))
+        );
+        const uploadedGallery = galleryFilenames.map(fn => getImageUrl(req, fn));
         const existingGallery = updateData.gallery || vehicle.gallery || [];
         updateData.gallery = [...existingGallery, ...uploadedGallery];
       }

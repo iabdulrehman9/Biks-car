@@ -18,6 +18,7 @@ import {
 
 import { fetchVehicle, type Vehicle } from '@/lib/api';
 import { useRouter } from '@/lib/router';
+import { useTranslation } from '@/lib/i18n';
 import {
   formatJPY,
   formatKm,
@@ -37,6 +38,7 @@ type VehicleSpec = {
 
 export function VehicleDetailsPage({ id }: { id: string }) {
   const { navigate } = useRouter();
+  const { t, language, translateCat, translateSt, translateTrans, translateF, translateCol, translateFeat } = useTranslation();
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,27 +52,24 @@ export function VehicleDetailsPage({ id }: { id: string }) {
     let mounted = true;
 
     const loadVehicle = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
         const data = await fetchVehicle(id);
 
         if (!mounted) return;
 
         if (!data) {
-          setError('Vehicle not found.');
-          setVehicle(null);
-        } else {
-          setVehicle(data);
+          setError('Vehicle not found');
+          return;
         }
-      } catch (err) {
-        if (!mounted) return;
-        setError('Failed to load vehicle details.');
-        setVehicle(null);
-      }
 
-      if (mounted) setLoading(false);
+        setVehicle(data);
+      } catch (err: any) {
+        if (mounted) {
+          setError(err.message || 'Failed to load vehicle details');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
     loadVehicle();
@@ -78,13 +77,6 @@ export function VehicleDetailsPage({ id }: { id: string }) {
     return () => {
       mounted = false;
     };
-  }, [id]);
-
-  /* --------------------------------
-     Reset Active Image
-  -------------------------------- */
-  useEffect(() => {
-    setActiveImage(0);
   }, [id]);
 
   /* --------------------------------
@@ -111,50 +103,50 @@ export function VehicleDetailsPage({ id }: { id: string }) {
     return [
       {
         icon: Calendar,
-        label: 'Year',
+        label: t('details.year', 'Year'),
         value: vehicle.year?.toString(),
       },
       {
         icon: Cog,
-        label: 'Body Type',
+        label: t('details.bodyType', 'Body Type'),
         value: vehicle.body_type,
       },
       {
         icon: Gauge,
-        label: 'Mileage',
+        label: t('details.mileage', 'Mileage'),
         value: vehicle.mileage_km
           ? `${formatKm(vehicle.mileage_km)} km`
           : null,
       },
       {
         icon: Fuel,
-        label: 'Fuel Type',
-        value: vehicle.fuel_type,
+        label: t('details.fuelType', 'Fuel Type'),
+        value: translateF(vehicle.fuel_type),
       },
       {
         icon: Settings2,
-        label: 'Transmission',
-        value: vehicle.transmission,
+        label: t('details.transmission', 'Transmission'),
+        value: translateTrans(vehicle.transmission),
       },
       {
         icon: Zap,
-        label: 'Engine',
+        label: t('details.engineSize', 'Engine Size'),
         value: vehicle.engine_cc
           ? `${vehicle.engine_cc} cc`
           : null,
       },
       {
         icon: Palette,
-        label: 'Color',
-        value: vehicle.color,
+        label: t('details.color', 'Color'),
+        value: translateCol(vehicle.color),
       },
       {
         icon: MapPin,
-        label: 'Location',
+        label: t('details.location', 'Location'),
         value: vehicle.location,
       },
     ];
-  }, [vehicle]);
+  }, [vehicle, t, translateF, translateTrans, translateCol]);
 
   /* --------------------------------
      Loading State
@@ -254,11 +246,11 @@ export function VehicleDetailsPage({ id }: { id: string }) {
         {/* Back Button */}
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/collection')}
           className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-navy"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Home
+          {t('details.backToInventory', 'Back to Collection')}
         </button>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
@@ -274,6 +266,8 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                     src={gallery[activeImage]}
                     alt={vehicleName}
                     className="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center">
@@ -290,7 +284,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                   <span
                     className={`h-2 w-2 rounded-full ${currentStatusDot}`}
                   />
-                  {vehicle.status}
+                  {translateSt(vehicle.status)}
                 </span>
               </div>
 
@@ -319,6 +313,8 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                         src={image}
                         alt=""
                         className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </button>
                   ))}
@@ -342,7 +338,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
             {vehicle.features && vehicle.features.length > 0 ? (
               <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
                 <h2 className="text-lg font-bold text-navy">
-                  Features & Options
+                  {t('details.features', 'Features & Equipment')}
                 </h2>
 
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -352,7 +348,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                       className="flex items-center gap-2 text-sm text-gray-600"
                     >
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-gold-dark" />
-                      <span>{feature}</span>
+                      <span>{translateFeat(feature)}</span>
                     </div>
                   ))}
                 </div>
@@ -395,7 +391,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                     aria-label="Contact BIKS on WhatsApp for vehicle inquiry"
                     className="btn-premium flex flex-1 items-center justify-center gap-2"
                   >
-                    <span>WhatsApp Inquiry</span>
+                    <span>{t('vehicle.inquireNow', 'WhatsApp Inquiry')}</span>
                   </a>
                   <a
                     href={`tel:${COMPANY_PHONE}`}
@@ -403,7 +399,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-navy/20 bg-white py-3 text-sm font-bold text-navy transition-all hover:bg-gray-50"
                   >
                     <Phone className="h-4 w-4 text-gold" />
-                    <span>Call Us</span>
+                    <span>{t('collection.call', 'Call Us')}</span>
                   </a>
                 </div>
               </section>
@@ -411,7 +407,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
               {/* Specifications */}
               <section className="rounded-xl border border-gray-200 bg-white p-6">
                 <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-navy">
-                  Specifications
+                  {t('vehicle.specs', 'Specifications')}
                 </h2>
 
                 <div className="grid grid-cols-2 gap-3">

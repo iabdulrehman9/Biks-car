@@ -3,9 +3,11 @@ import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { login } from '@/lib/api';
 import { useRouter } from '@/lib/router';
 import { Logo } from '@/components/Logo';
+import { useAdminTranslation } from '@/lib/i18n';
 
 export function AdminLoginPage() {
   const { navigate } = useRouter();
+  const { t, adminLanguage, setAdminLanguage } = useAdminTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -36,9 +38,34 @@ export function AdminLoginPage() {
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 flex justify-center">
+        {/* Top bar with Logo & Admin Language Toggle */}
+        <div className="mb-6 flex items-center justify-between">
           <Logo variant="light" onClick={() => navigate('/')} />
+          
+          <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.06] p-0.5">
+            <button
+              type="button"
+              onClick={() => setAdminLanguage('en')}
+              className={`rounded-md px-2.5 py-1 text-xs font-bold transition-all ${
+                adminLanguage === 'en'
+                  ? 'bg-gold text-navy-dark shadow-sm'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setAdminLanguage('ja')}
+              className={`rounded-md px-2.5 py-1 text-xs font-bold transition-all ${
+                adminLanguage === 'ja'
+                  ? 'bg-gold text-navy-dark shadow-sm'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              日本語
+            </button>
+          </div>
         </div>
 
         {/* Card */}
@@ -47,9 +74,9 @@ export function AdminLoginPage() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-gold/30 bg-gold/10">
               <Lock className="h-6 w-6 text-gold" />
             </div>
-            <h1 className="text-2xl font-extrabold text-white">Admin Login</h1>
+            <h1 className="text-2xl font-extrabold text-white">{t('login.title', 'Admin Login')}</h1>
             <p className="mt-1 text-sm text-white/50">
-              Sign in to manage your vehicle inventory
+              {t('login.subtitle', 'Sign in to manage your vehicle inventory')}
             </p>
           </div>
 
@@ -64,7 +91,7 @@ export function AdminLoginPage() {
             {/* Email */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/50">
-                Email
+                {t('login.email', 'Email')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -72,7 +99,7 @@ export function AdminLoginPage() {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter admin email (e.g. biksss@gmail.com)"
+                  placeholder={t('login.emailPlaceholder', 'Enter email address')}
                   required
                   className="w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 pl-10 pr-4 text-sm text-white placeholder-white/30 transition-all focus:border-gold/50 focus:outline-none focus:ring-1 focus:ring-gold/50"
                 />
@@ -82,7 +109,7 @@ export function AdminLoginPage() {
             {/* Password */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/50">
-                Password
+                {t('login.password', 'Password')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -90,7 +117,7 @@ export function AdminLoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder={t('login.passwordPlaceholder', 'Enter password')}
                   required
                   className="w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 pl-10 pr-11 text-sm text-white placeholder-white/30 transition-all focus:border-gold/50 focus:outline-none focus:ring-1 focus:ring-gold/50"
                 />
@@ -113,10 +140,10 @@ export function AdminLoginPage() {
               {loading ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-navy-dark/20 border-t-navy-dark" />
-                  Signing in...
+                  {t('login.submitting', 'Signing in...')}
                 </>
               ) : (
-                'Sign In'
+                t('login.submit', 'Sign In')
               )}
             </button>
           </form>
@@ -128,7 +155,7 @@ export function AdminLoginPage() {
               onClick={() => navigate('/')}
               className="text-xs text-white/40 transition-colors hover:text-gold"
             >
-              ← Back to website
+              ← {t('nav.home', 'Back to website')}
             </button>
           </div>
         </div>
