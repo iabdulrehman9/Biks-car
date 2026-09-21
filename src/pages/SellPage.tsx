@@ -310,7 +310,7 @@ export function SellPage() {
 
                 <div>
                   <label className="block text-xs font-extrabold uppercase tracking-wider text-[#001030]">
-                    {t('sell.phoneLabel', 'Phone Number / WhatsApp')} <span className="text-rose-500">*</span>
+                    {t('sell.phoneLabel', 'Phone Number ')} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="tel"
