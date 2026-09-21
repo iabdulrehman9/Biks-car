@@ -14,6 +14,8 @@ import {
   Wrench,
   Cog,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { fetchVehicles, fetchCategories, type Vehicle, type Category } from '@/lib/api';
 import { useRouter } from '@/lib/router';
@@ -23,11 +25,23 @@ import { useTranslation } from '@/lib/i18n';
 // Fallback initial categories if API is loading
 const defaultCategories = [
   'Trucks',
-  'Cars',
+  'Excavators',
   'Tyre Shover',
   'Forklifts',
-  'Agricultural Machines',
+  'Agriculture Machines',
   'Truck Fixtures',
+  'Cars',
+  'Other Parts',
+];
+
+const PREFERRED_CATEGORY_ORDER = [
+  'Trucks',
+  'Excavators',
+  'Tyre Shover',
+  'Forklifts',
+  'Agriculture Machines',
+  'Truck Fixtures',
+  'Cars',
   'Other Parts',
 ];
 
@@ -48,6 +62,8 @@ export function CollectionPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>(route.query.get('category') || '');
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
 
   // Fetch vehicles and categories on mount
   useEffect(() => {
@@ -80,15 +96,37 @@ export function CollectionPage() {
     }
   }, [route.query]);
 
-  // Distinct category list: merge DB categories with defaults
+  // Distinct category list: merge DB categories with defaults and sort by client preference
   const allCategoryNames = useMemo(() => {
     const names = new Set<string>(defaultCategories);
-    categories.forEach(c => names.add(c.name));
-    vehicles.forEach(v => {
-      if (v.category) names.add(v.category);
+    categories.forEach(c => {
+      const n = c.name === 'Agricultural Machines' ? 'Agriculture Machines' : c.name;
+      names.add(n);
     });
-    return Array.from(names);
+    vehicles.forEach(v => {
+      if (v.category) {
+        const n = v.category === 'Agricultural Machines' ? 'Agriculture Machines' : v.category;
+        names.add(n);
+      }
+    });
+    return Array.from(names).sort((a, b) => {
+      const idxA = PREFERRED_CATEGORY_ORDER.indexOf(a);
+      const idxB = PREFERRED_CATEGORY_ORDER.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
   }, [categories, vehicles]);
+
+  // Helper to match category gracefully
+  const matchesCategory = (vehicleCat?: string | null, target?: string) => {
+    if (!vehicleCat || !target) return false;
+    if (vehicleCat === target) return true;
+    const normV = vehicleCat.toLowerCase().replace(/agricultural/g, 'agriculture');
+    const normT = target.toLowerCase().replace(/agricultural/g, 'agriculture');
+    return normV === normT;
+  };
 
   // Counts per category
   const categoryCounts = useMemo(() => {
@@ -101,7 +139,7 @@ export function CollectionPage() {
         if (cat === 'Cars') {
           return v.category === 'Cars' || (!v.category && v.body_type?.toLowerCase() !== 'truck');
         }
-        return v.category === cat;
+        return matchesCategory(v.category, cat);
       }).length;
     });
     return counts;
@@ -134,7 +172,7 @@ export function CollectionPage() {
         if (selectedCategory === 'Cars') {
           return v.category === 'Cars' || (!v.category && v.body_type?.toLowerCase() !== 'truck');
         }
-        return v.category === selectedCategory;
+        return matchesCategory(v.category, selectedCategory);
       });
     }
 
@@ -163,6 +201,45 @@ export function CollectionPage() {
     return result;
   }, [vehicles, search, selectedCategory, selectedStatus, sortBy]);
 
+  // Reset pagination to page 1 whenever any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategory, selectedStatus, sortBy]);
+
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE));
+  const paginatedVehicles = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredVehicles.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredVehicles, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    const resultsElem = document.getElementById('collection-results');
+    if (resultsElem) {
+      resultsElem.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 320, behavior: 'smooth' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
+
   // Active filters count (Category + Status)
   const activeFiltersCount = (selectedCategory && selectedCategory !== 'all' ? 1 : 0) + selectedStatus.length;
 
@@ -184,6 +261,7 @@ export function CollectionPage() {
     const lower = name.toLowerCase();
     if (lower.includes('truck') && !lower.includes('fixture')) return <Truck className="h-4 w-4" />;
     if (lower.includes('agri') || lower.includes('tractor')) return <Tractor className="h-4 w-4" />;
+    if (lower.includes('excavat')) return <Wrench className="h-4 w-4" />;
     if (lower.includes('forklift') || lower.includes('shover')) return <Cog className="h-4 w-4" />;
     if (lower.includes('part') || lower.includes('fixture')) return <Wrench className="h-4 w-4" />;
     return <Car className="h-4 w-4" />;
@@ -295,10 +373,10 @@ export function CollectionPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20 sm:pt-24">
+    <div className="min-h-screen bg-slate-50 pt-16 sm:pt-20">
       {/* Top Hero Banner */}
       <div className="border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-md bg-[#D0A030]/15 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider text-[#9a751e]">
@@ -360,7 +438,7 @@ export function CollectionPage() {
           {/* ================= MAIN CONTENT ================= */}
           <main className="flex-1 min-w-0">
             {/* Top Toolbar */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div id="collection-results" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm scroll-mt-24">
               <div className="flex items-center gap-3">
                 {/* Mobile Filter Toggle */}
                 <button
@@ -378,7 +456,7 @@ export function CollectionPage() {
                 </button>
 
                 <p className="text-xs font-semibold text-slate-500">
-                  Showing <span className="font-extrabold text-[#001030]">{filteredVehicles.length}</span> {filteredVehicles.length === 1 ? 'vehicle' : 'vehicles'}
+                  Showing <span className="font-extrabold text-[#001030]">{filteredVehicles.length > 0 ? `${(currentPage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(currentPage * ITEMS_PER_PAGE, filteredVehicles.length)}` : 0}</span> of <span className="font-extrabold text-[#001030]">{filteredVehicles.length}</span> {filteredVehicles.length === 1 ? 'vehicle' : 'vehicles'}
                 </p>
               </div>
 
@@ -486,14 +564,76 @@ export function CollectionPage() {
                 </button>
               </div>
             ) : (
-              <div className={viewMode === 'grid'
-                ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-                : "flex flex-col gap-4"
-              }>
-                {filteredVehicles.map((v) => (
-                  <VehicleCard key={v.id} vehicle={v} />
-                ))}
-              </div>
+              <>
+                <div className={viewMode === 'grid'
+                  ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                  : "flex flex-col gap-4"
+                }>
+                  {paginatedVehicles.map((v) => (
+                    <VehicleCard key={v.id} vehicle={v} />
+                  ))}
+                </div>
+
+                {/* ================= PAGINATION CONTROLS ================= */}
+                {totalPages > 1 && (
+                  <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-8 sm:flex-row">
+                    {/* Showing info */}
+                    <p className="text-xs font-semibold text-slate-500">
+                      Showing page <span className="font-bold text-[#001030]">{currentPage}</span> of <span className="font-bold text-[#001030]">{totalPages}</span> ({filteredVehicles.length} total vehicles)
+                    </p>
+
+                    {/* Page buttons */}
+                    <div className="flex items-center gap-1.5">
+                      {/* Prev button */}
+                      <button
+                        type="button"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        aria-label="Previous page"
+                        className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-navy disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="hidden sm:inline">Prev</span>
+                      </button>
+
+                      {/* Number buttons */}
+                      {getPageNumbers().map((p, idx) =>
+                        typeof p === 'number' ? (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handlePageChange(p)}
+                            aria-current={currentPage === p ? 'page' : undefined}
+                            className={`h-9 w-9 rounded-xl text-xs font-bold transition shadow-sm ${
+                              currentPage === p
+                                ? 'bg-[#001030] text-[#D0A030] shadow-[#001030]/20 font-black scale-105'
+                                : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ) : (
+                          <span key={idx} className="px-1 text-xs font-bold text-slate-400">
+                            ...
+                          </span>
+                        )
+                      )}
+
+                      {/* Next button */}
+                      <button
+                        type="button"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Next page"
+                        className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-navy disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>

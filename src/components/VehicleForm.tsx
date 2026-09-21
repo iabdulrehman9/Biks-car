@@ -23,11 +23,12 @@ export function VehicleForm({ vehicle, onSubmit, onCancel, loading }: VehicleFor
   const [category, setCategory] = useState(vehicle?.category || 'Cars');
   const [categories, setCategories] = useState<string[]>([
     'Trucks',
-    'Cars',
+    'Excavators',
     'Tyre Shover',
     'Forklifts',
-    'Agricultural Machines',
+    'Agriculture Machines',
     'Truck Fixtures',
+    'Cars',
     'Other Parts',
   ]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);

@@ -1,8 +1,12 @@
 import type { MouseEvent } from 'react';
 import { Smartphone, Phone, MapPin, Globe, ArrowUpRight, Mail, Printer } from 'lucide-react';
 import { Logo } from './Logo';
+import { LineIcon } from './LineIcon';
+import qrCodeImg from '../img/line-qr-code.jpeg';
 import { useRouter } from '@/lib/router';
 import { useTranslation } from '@/lib/i18n';
+
+const LINE_URL = 'https://line.me/ti/p/-etV1cs4Vf';
 
 const CONTACT_DETAILS = [
   {
@@ -51,8 +55,6 @@ const SOCIAL_LINKS = [
   },
 ] as const;
 
-const DEVELOPER_LINK = 'https://www.instagram.com/aiwalogic?stkn=ZG5jcmVrenFhZ2lk';
-
 export function Footer() {
   const { navigate } = useRouter();
   const { t, categoryLabel } = useTranslation();
@@ -67,15 +69,17 @@ export function Footer() {
     { label: t('nav.home', 'Home'), path: '/' },
     { label: t('nav.collection', 'Collection'), path: '/collection' },
     { label: t('nav.about', 'About Us'), path: '/about' },
+    { label: t('nav.sellWithUs', 'Sell With Us'), path: '/sell' },
   ];
 
   const popularCategories = [
     'Trucks',
-    'Cars',
+    'Excavators',
     'Tyre Shover',
     'Forklifts',
-    'Agricultural Machines',
+    'Agriculture Machines',
     'Truck Fixtures',
+    'Cars',
     'Other Parts',
   ];
 
@@ -96,7 +100,7 @@ export function Footer() {
             </div>
 
             <p className="mt-4 max-w-md text-sm leading-6 text-white/65 sm:mt-5 sm:leading-7">
-              {t('footer.about', 'BIKS Trading Company is a trusted Japanese vehicle exporter, supplying high-quality new and used vehicles worldwide with reliable inspection, shipping, and export services.')}
+              {t('footer.about', 'BIKS Trading Company is a trusted Japanese vehicle exporter, supplying high-quality used vehicles worldwide with reliable inspection, shipping, and export services.')}
             </p>
 
             {/* Social Links */}
@@ -214,6 +218,31 @@ export function Footer() {
                 })}
               </ul>
             </address>
+
+            {/* LINE Official QR Code Scanner */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-[#D0A030]">
+                <LineIcon className="h-3.5 w-3.5 text-[#06C755]" />
+                <span>{t('footer.lineConnect', 'Connect on LINE')}</span>
+              </p>
+              <a
+                href={LINE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex flex-col items-center rounded-xl bg-white p-2.5 shadow-md ring-1 ring-white/10 transition-all duration-200 hover:scale-[1.03] hover:shadow-xl hover:ring-2 hover:ring-[#06C755]"
+                aria-label="Connect with BIKS on LINE"
+              >
+                <img
+                  src={qrCodeImg}
+                  alt="BIKS Official LINE QR Code"
+                  className="h-28 w-28 rounded-lg object-contain"
+                />
+                <span className="mt-1.5 flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-[#001030] transition-colors group-hover:text-[#06C755]">
+                  <span>{t('footer.lineScan', 'Scan or Click to Chat')}</span>
+                  <ArrowUpRight className="h-3 w-3" />
+                </span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -221,18 +250,6 @@ export function Footer() {
         <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:pt-7">
           <p className="text-left">
             © {new Date().getFullYear()} BIKS Trading Company. {t('footer.rights', 'All rights reserved.')}
-          </p>
-
-          <p className="text-left sm:text-right">
-            Designed &amp; Developed by{' '}
-            <a
-              href={DEVELOPER_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-white/60 transition-colors hover:text-[#D0A030] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D0A030]"
-            >
-              AIWA Logic
-            </a>
           </p>
         </div>
 

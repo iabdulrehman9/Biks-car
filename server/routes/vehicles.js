@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
-const Vehicle = require('../models/Vehicle');
+const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -66,7 +66,6 @@ function getImageUrl(req, filename) {
 function deleteLocalFile(imageUrl) {
   if (!imageUrl) return;
   try {
-    // Only delete if it's a local upload (contains /uploads/)
     if (imageUrl.includes('/uploads/')) {
       const filename = imageUrl.split('/uploads/').pop();
       const filePath = path.join(uploadsDir, filename);
@@ -86,8 +85,8 @@ function deleteLocalFile(imageUrl) {
 // GET /api/vehicles — List all vehicles
 router.get('/', async (req, res) => {
   try {
-    const vehicles = await Vehicle.find().sort({ created_at: -1 });
-    res.json(vehicles);
+    const rows = await db.query('SELECT * FROM `vehicles` ORDER BY `created_at` DESC');
+    res.json(rows.map(r => db.formatVehicle(r, req.get('host'))));
   } catch (err) {
     console.error('Error fetching vehicles:', err);
     res.status(500).json({ error: 'Failed to fetch vehicles.' });
@@ -97,11 +96,11 @@ router.get('/', async (req, res) => {
 // GET /api/vehicles/:id — Get single vehicle
 router.get('/:id', async (req, res) => {
   try {
-    const vehicle = await Vehicle.findById(req.params.id);
-    if (!vehicle) {
+    const rows = await db.query('SELECT * FROM `vehicles` WHERE id = ? LIMIT 1', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Vehicle not found.' });
     }
-    res.json(vehicle);
+    res.json(db.formatVehicle(rows[0], req.get('host')));
   } catch (err) {
     console.error('Error fetching vehicle:', err);
     res.status(500).json({ error: 'Failed to fetch vehicle.' });
@@ -124,36 +123,43 @@ router.post('/',
       const vehicleData = { ...req.body };
 
       // Parse arrays and booleans from form data
+      let features = [];
       if (typeof vehicleData.features === 'string') {
         try {
-          vehicleData.features = JSON.parse(vehicleData.features);
+          features = JSON.parse(vehicleData.features);
         } catch {
-          vehicleData.features = vehicleData.features.split(',').map(f => f.trim()).filter(Boolean);
+          features = vehicleData.features.split(',').map(f => f.trim()).filter(Boolean);
         }
-      }
-      if (typeof vehicleData.gallery === 'string') {
-        try {
-          vehicleData.gallery = JSON.parse(vehicleData.gallery);
-        } catch {
-          vehicleData.gallery = vehicleData.gallery.split(',').map(u => u.trim()).filter(Boolean);
-        }
-      }
-      if (typeof vehicleData.featured === 'string') {
-        vehicleData.featured = vehicleData.featured === 'true';
+      } else if (Array.isArray(vehicleData.features)) {
+        features = vehicleData.features;
       }
 
-      // Parse numbers
-      ['year', 'engine_cc', 'mileage_km', 'price_fob_jpy'].forEach(field => {
-        if (vehicleData[field]) vehicleData[field] = parseInt(vehicleData[field], 10);
-      });
-      if (vehicleData.price_fob_usd) {
-        vehicleData.price_fob_usd = parseFloat(vehicleData.price_fob_usd);
+      let gallery = [];
+      if (typeof vehicleData.gallery === 'string') {
+        try {
+          gallery = JSON.parse(vehicleData.gallery);
+        } catch {
+          gallery = vehicleData.gallery.split(',').map(u => u.trim()).filter(Boolean);
+        }
+      } else if (Array.isArray(vehicleData.gallery)) {
+        gallery = vehicleData.gallery;
       }
+
+      const featured = (vehicleData.featured === true || vehicleData.featured === 'true' || vehicleData.featured === 1 || vehicleData.featured === '1') ? 1 : 0;
+
+      // Parse numbers
+      const year = vehicleData.year ? parseInt(vehicleData.year, 10) : new Date().getFullYear();
+      const engine_cc = vehicleData.engine_cc ? parseInt(vehicleData.engine_cc, 10) : null;
+      const mileage_km = vehicleData.mileage_km ? parseInt(vehicleData.mileage_km, 10) : null;
+      const price_fob_jpy = vehicleData.price_fob_jpy ? parseInt(vehicleData.price_fob_jpy, 10) : null;
+      const price_fob_usd = vehicleData.price_fob_usd ? parseFloat(vehicleData.price_fob_usd) : null;
+
+      let imageUrl = vehicleData.image_url || null;
 
       // Handle uploaded main image (compressed to WebP)
       if (req.files && req.files.main_image && req.files.main_image[0]) {
         const filename = await processAndSaveImage(req.files.main_image[0].buffer, 'vehicle-main');
-        vehicleData.image_url = getImageUrl(req, filename);
+        imageUrl = getImageUrl(req, filename);
       }
 
       // Handle uploaded gallery images (compressed to WebP)
@@ -162,18 +168,50 @@ router.post('/',
           req.files.gallery_images.map(f => processAndSaveImage(f.buffer, 'vehicle-gallery'))
         );
         const uploadedGallery = galleryFilenames.map(fn => getImageUrl(req, fn));
-        vehicleData.gallery = [...(vehicleData.gallery || []), ...uploadedGallery];
+        gallery = [...gallery, ...uploadedGallery];
       }
 
       // If gallery is empty but we have main image, add main to gallery
-      if ((!vehicleData.gallery || vehicleData.gallery.length === 0) && vehicleData.image_url) {
-        vehicleData.gallery = [vehicleData.image_url];
+      if (gallery.length === 0 && imageUrl) {
+        gallery = [imageUrl];
       }
 
-      const vehicle = new Vehicle(vehicleData);
-      await vehicle.save();
+      const id = db.generateId();
 
-      res.status(201).json(vehicle);
+      await db.query(
+        `INSERT INTO \`vehicles\` (
+          id, make, model, year, category, body_type, transmission, fuel_type,
+          engine_cc, mileage_km, color, price_fob_jpy, price_fob_usd, status,
+          location, image_url, gallery, features, featured, description, chassis_no, stock_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          vehicleData.make || 'Unknown Make',
+          vehicleData.model || 'Unknown Model',
+          year,
+          vehicleData.category || null,
+          vehicleData.body_type || null,
+          vehicleData.transmission || null,
+          vehicleData.fuel_type || null,
+          engine_cc,
+          mileage_km,
+          vehicleData.color || null,
+          price_fob_jpy,
+          price_fob_usd,
+          vehicleData.status || 'Available',
+          vehicleData.location || null,
+          imageUrl,
+          JSON.stringify(gallery),
+          JSON.stringify(features),
+          featured,
+          vehicleData.description || null,
+          vehicleData.chassis_no || null,
+          vehicleData.stock_id || null,
+        ]
+      );
+
+      const rows = await db.query('SELECT * FROM `vehicles` WHERE id = ? LIMIT 1', [id]);
+      res.status(201).json(db.formatVehicle(rows[0], req.get('host')));
     } catch (err) {
       console.error('Error creating vehicle:', err);
       res.status(500).json({ error: 'Failed to create vehicle.', details: err.message });
@@ -190,46 +228,55 @@ router.put('/:id',
   ]),
   async (req, res) => {
     try {
-      const vehicle = await Vehicle.findById(req.params.id);
-      if (!vehicle) {
+      const existingRows = await db.query('SELECT * FROM `vehicles` WHERE id = ? LIMIT 1', [req.params.id]);
+      if (existingRows.length === 0) {
         return res.status(404).json({ error: 'Vehicle not found.' });
       }
-
+      const existing = db.formatVehicle(existingRows[0], req.get('host'));
       const updateData = { ...req.body };
 
-      // Parse arrays and booleans from form data
+      // Parse arrays
+      let features = existing.features || [];
       if (typeof updateData.features === 'string') {
         try {
-          updateData.features = JSON.parse(updateData.features);
+          features = JSON.parse(updateData.features);
         } catch {
-          updateData.features = updateData.features.split(',').map(f => f.trim()).filter(Boolean);
+          features = updateData.features.split(',').map(f => f.trim()).filter(Boolean);
         }
+      } else if (Array.isArray(updateData.features)) {
+        features = updateData.features;
       }
+
+      let gallery = existing.gallery || [];
       if (typeof updateData.gallery === 'string') {
         try {
-          updateData.gallery = JSON.parse(updateData.gallery);
+          gallery = JSON.parse(updateData.gallery);
         } catch {
-          updateData.gallery = updateData.gallery.split(',').map(u => u.trim()).filter(Boolean);
+          gallery = updateData.gallery.split(',').map(u => u.trim()).filter(Boolean);
         }
+      } else if (Array.isArray(updateData.gallery)) {
+        gallery = updateData.gallery;
       }
-      if (typeof updateData.featured === 'string') {
-        updateData.featured = updateData.featured === 'true';
+
+      let featured = existing.featured ? 1 : 0;
+      if (updateData.featured !== undefined) {
+        featured = (updateData.featured === true || updateData.featured === 'true' || updateData.featured === 1 || updateData.featured === '1') ? 1 : 0;
       }
 
       // Parse numbers
-      ['year', 'engine_cc', 'mileage_km', 'price_fob_jpy'].forEach(field => {
-        if (updateData[field]) updateData[field] = parseInt(updateData[field], 10);
-      });
-      if (updateData.price_fob_usd) {
-        updateData.price_fob_usd = parseFloat(updateData.price_fob_usd);
-      }
+      const year = updateData.year !== undefined ? parseInt(updateData.year, 10) : existing.year;
+      const engine_cc = updateData.engine_cc !== undefined ? (updateData.engine_cc ? parseInt(updateData.engine_cc, 10) : null) : existing.engine_cc;
+      const mileage_km = updateData.mileage_km !== undefined ? (updateData.mileage_km ? parseInt(updateData.mileage_km, 10) : null) : existing.mileage_km;
+      const price_fob_jpy = updateData.price_fob_jpy !== undefined ? (updateData.price_fob_jpy ? parseInt(updateData.price_fob_jpy, 10) : null) : existing.price_fob_jpy;
+      const price_fob_usd = updateData.price_fob_usd !== undefined ? (updateData.price_fob_usd ? parseFloat(updateData.price_fob_usd) : null) : existing.price_fob_usd;
+
+      let imageUrl = updateData.image_url !== undefined ? updateData.image_url : existing.image_url;
 
       // Handle uploaded main image (compressed to WebP)
       if (req.files && req.files.main_image && req.files.main_image[0]) {
-        // Delete old main image if it was a local upload
-        deleteLocalFile(vehicle.image_url);
+        deleteLocalFile(existing.image_url);
         const filename = await processAndSaveImage(req.files.main_image[0].buffer, 'vehicle-main');
-        updateData.image_url = getImageUrl(req, filename);
+        imageUrl = getImageUrl(req, filename);
       }
 
       // Handle uploaded gallery images (compressed to WebP)
@@ -238,14 +285,61 @@ router.put('/:id',
           req.files.gallery_images.map(f => processAndSaveImage(f.buffer, 'vehicle-gallery'))
         );
         const uploadedGallery = galleryFilenames.map(fn => getImageUrl(req, fn));
-        const existingGallery = updateData.gallery || vehicle.gallery || [];
-        updateData.gallery = [...existingGallery, ...uploadedGallery];
+        gallery = [...gallery, ...uploadedGallery];
       }
 
-      Object.assign(vehicle, updateData);
-      await vehicle.save();
+      await db.query(
+        `UPDATE \`vehicles\` SET
+          make = ?,
+          model = ?,
+          year = ?,
+          category = ?,
+          body_type = ?,
+          transmission = ?,
+          fuel_type = ?,
+          engine_cc = ?,
+          mileage_km = ?,
+          color = ?,
+          price_fob_jpy = ?,
+          price_fob_usd = ?,
+          status = ?,
+          location = ?,
+          image_url = ?,
+          gallery = ?,
+          features = ?,
+          featured = ?,
+          description = ?,
+          chassis_no = ?,
+          stock_id = ?
+        WHERE id = ?`,
+        [
+          updateData.make !== undefined ? updateData.make : existing.make,
+          updateData.model !== undefined ? updateData.model : existing.model,
+          year,
+          updateData.category !== undefined ? updateData.category : existing.category,
+          updateData.body_type !== undefined ? updateData.body_type : existing.body_type,
+          updateData.transmission !== undefined ? updateData.transmission : existing.transmission,
+          updateData.fuel_type !== undefined ? updateData.fuel_type : existing.fuel_type,
+          engine_cc,
+          mileage_km,
+          updateData.color !== undefined ? updateData.color : existing.color,
+          price_fob_jpy,
+          price_fob_usd,
+          updateData.status !== undefined ? updateData.status : existing.status,
+          updateData.location !== undefined ? updateData.location : existing.location,
+          imageUrl,
+          JSON.stringify(gallery),
+          JSON.stringify(features),
+          featured,
+          updateData.description !== undefined ? updateData.description : existing.description,
+          updateData.chassis_no !== undefined ? updateData.chassis_no : existing.chassis_no,
+          updateData.stock_id !== undefined ? updateData.stock_id : existing.stock_id,
+          req.params.id,
+        ]
+      );
 
-      res.json(vehicle);
+      const updatedRows = await db.query('SELECT * FROM `vehicles` WHERE id = ? LIMIT 1', [req.params.id]);
+      res.json(db.formatVehicle(updatedRows[0], req.get('host')));
     } catch (err) {
       console.error('Error updating vehicle:', err);
       res.status(500).json({ error: 'Failed to update vehicle.', details: err.message });
@@ -256,10 +350,11 @@ router.put('/:id',
 // DELETE /api/vehicles/:id — Delete vehicle
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const vehicle = await Vehicle.findById(req.params.id);
-    if (!vehicle) {
+    const existingRows = await db.query('SELECT * FROM `vehicles` WHERE id = ? LIMIT 1', [req.params.id]);
+    if (existingRows.length === 0) {
       return res.status(404).json({ error: 'Vehicle not found.' });
     }
+    const vehicle = db.formatVehicle(existingRows[0], req.get('host'));
 
     // Delete associated uploaded images
     deleteLocalFile(vehicle.image_url);
@@ -267,9 +362,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       vehicle.gallery.forEach(url => deleteLocalFile(url));
     }
 
-    await Vehicle.findByIdAndDelete(req.params.id);
-
-    res.json({ message: 'Vehicle deleted successfully.' });
+    await db.query('DELETE FROM `vehicles` WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Vehicle deleted successfully.', id: req.params.id });
   } catch (err) {
     console.error('Error deleting vehicle:', err);
     res.status(500).json({ error: 'Failed to delete vehicle.' });

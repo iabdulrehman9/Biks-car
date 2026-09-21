@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
-import { Menu, X, Phone, Globe, ChevronDown, Check } from 'lucide-react';
+import { Menu, X, Phone, Globe, ChevronDown, Check, Tag } from 'lucide-react';
 import { Logo } from './Logo';
+import { LineIcon } from './LineIcon';
 import { useRouter } from '@/lib/router';
 import { useTranslation, type Language } from '@/lib/i18n';
 
@@ -11,6 +12,7 @@ const navLinks = [
 ];
 
 const COMPANY_PHONE = '+819077144212';
+const LINE_URL = 'https://line.me/ti/p/-etV1cs4Vf';
 
 export function Navbar() {
   const { route, navigate } = useRouter();
@@ -151,14 +153,40 @@ export function Navbar() {
               )}
             </div>
 
+            {/* LINE Message Button */}
+            <a
+              href={LINE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#06C755] px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all duration-200 hover:bg-[#05b34c] hover:shadow-md active:scale-95"
+              aria-label="Message on LINE"
+            >
+              <LineIcon className="h-4 w-4 fill-current shrink-0" />
+              <span>{t('nav.message', 'Message')}</span>
+            </a>
+
             <a
               href={`tel:${COMPANY_PHONE}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#D0A030] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#001030] shadow-sm transition-all duration-200 hover:bg-[#c09025] hover:shadow-md active:scale-95"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#D0A030] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#001030] shadow-sm transition-all duration-200 hover:bg-[#c09025] hover:shadow-md active:scale-95"
               aria-label="Call BIKS Trading Company"
             >
               <Phone className="h-4 w-4" />
               <span>{t('nav.contact', 'Contact Us')}</span>
             </a>
+
+            {/* Sell Button - On the right side of Contact Us */}
+            <button
+              type="button"
+              onClick={() => navigate('/sell')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider transition-all duration-200 shadow-sm active:scale-95 ${
+                isActive('/sell')
+                  ? 'bg-[#001030] text-[#D0A030] ring-2 ring-[#D0A030]'
+                  : 'border border-[#001030] bg-[#001030] text-white hover:bg-[#001a45] hover:border-[#D0A030] hover:text-[#D0A030]'
+              }`}
+            >
+              <Tag className="h-3.5 w-3.5 text-[#D0A030]" />
+              <span>{t('nav.sell', 'Sell')}</span>
+            </button>
           </div>
 
           {/* ================= MOBILE MENU BUTTON ================= */}
@@ -241,14 +269,38 @@ export function Navbar() {
             );
           })}
 
+          {/* Mobile LINE Message Button */}
+          <a
+            href={LINE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold uppercase tracking-wider text-white transition-all hover:bg-[#05b34c] active:scale-[0.98] shadow-sm"
+            aria-label="Message on LINE"
+          >
+            <LineIcon className="h-4 w-4 fill-current shrink-0" />
+            <span>{t('nav.message', 'Message')}</span>
+          </a>
+
           <a
             href={`tel:${COMPANY_PHONE}`}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#D0A030] px-5 py-3 text-sm font-bold uppercase tracking-wider text-[#001030] transition-all hover:bg-[#c09025] active:scale-[0.98]"
+            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#D0A030] px-5 py-3 text-sm font-bold uppercase tracking-wider text-[#001030] transition-all hover:bg-[#c09025] active:scale-[0.98]"
             aria-label="Call BIKS Trading Company"
           >
             <Phone className="h-4 w-4" />
             <span>{t('nav.contact', 'Contact Us')}</span>
           </a>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/sell');
+              setMobileOpen(false);
+            }}
+            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-[#001030] bg-[#001030] px-5 py-3 text-sm font-extrabold uppercase tracking-wider text-[#D0A030] transition-all hover:bg-[#001a45] active:scale-[0.98]"
+          >
+            <Tag className="h-4 w-4" />
+            <span>{t('nav.sell', 'Sell Your Equipment / Vehicle')}</span>
+          </button>
         </div>
       </div>
     </header>

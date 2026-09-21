@@ -1,38 +1,14 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
+const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-/**
- * Bootstrap the default admin if none exists in the database.
- */
-async function ensureDefaultAdmin() {
-  try {
-    const count = await Admin.countDocuments();
-    if (count === 0) {
-      const defaultEmail = (process.env.ADMIN_EMAIL || 'biksss@gmail.com').toLowerCase().trim();
-      const defaultPassword = process.env.ADMIN_PASSWORD || 'biks2024';
-      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-      await Admin.create({
-        email: defaultEmail,
-        password: hashedPassword,
-        role: 'admin',
-      });
-      console.log(`✅ Default admin initialized in database: ${defaultEmail}`);
-    }
-  } catch (err) {
-    console.error('Error ensuring default admin:', err.message);
-  }
-}
-
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    await ensureDefaultAdmin();
-
     const { email, username, password } = req.body;
     const inputIdentifier = (email || username || '').toLowerCase().trim();
 
@@ -41,11 +17,13 @@ router.post('/login', async (req, res) => {
     }
 
     // Try finding by email
-    let admin = await Admin.findOne({ email: inputIdentifier });
+    let rows = await db.query('SELECT * FROM `admins` WHERE LOWER(email) = ? LIMIT 1', [inputIdentifier]);
+    let admin = rows[0];
 
     // Fallback: If input is 'admin' or matches old username, find the single admin in DB
     if (!admin && inputIdentifier === 'admin') {
-      admin = await Admin.findOne();
+      const fallbackRows = await db.query('SELECT * FROM `admins` LIMIT 1');
+      admin = fallbackRows[0];
     }
 
     if (!admin) {
@@ -60,8 +38,8 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT with extended 30-day lifespan
     const token = jwt.sign(
-      { id: admin._id, email: admin.email, role: admin.role },
-      process.env.JWT_SECRET,
+      { id: admin.id, email: admin.email, role: admin.role },
+      process.env.JWT_SECRET || 'biks_jwt_secret_key_2024_trading_company',
       { expiresIn: '30d' }
     );
 
@@ -75,7 +53,8 @@ router.post('/login', async (req, res) => {
 // GET /api/auth/profile — Get current admin profile
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    const admin = await Admin.findById(req.user.id);
+    const rows = await db.query('SELECT id, email, role FROM `admins` WHERE id = ? LIMIT 1', [req.user.id]);
+    const admin = rows[0];
     if (!admin) {
       return res.status(404).json({ error: 'Admin account not found.' });
     }
@@ -91,27 +70,33 @@ router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const admin = await Admin.findById(req.user.id);
+    const rows = await db.query('SELECT * FROM `admins` WHERE id = ? LIMIT 1', [req.user.id]);
+    const admin = rows[0];
     if (!admin) {
       return res.status(404).json({ error: 'Admin account not found.' });
     }
 
+    let updatedEmail = admin.email;
+    let updatedPassword = admin.password;
+
     // If new email is provided
     if (email && email.trim()) {
       const normalizedEmail = email.toLowerCase().trim();
-      // Basic email regex validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(normalizedEmail)) {
         return res.status(400).json({ error: 'Please provide a valid email address.' });
       }
 
       // Check if already used by another account
-      const existing = await Admin.findOne({ email: normalizedEmail, _id: { $ne: admin._id } });
-      if (existing) {
+      const existing = await db.query(
+        'SELECT id FROM `admins` WHERE LOWER(email) = ? AND id != ? LIMIT 1',
+        [normalizedEmail, admin.id]
+      );
+      if (existing.length > 0) {
         return res.status(400).json({ error: 'This email is already in use.' });
       }
 
-      admin.email = normalizedEmail;
+      updatedEmail = normalizedEmail;
     }
 
     // If new password is provided
@@ -119,21 +104,24 @@ router.put('/profile', authMiddleware, async (req, res) => {
       if (password.length < 6) {
         return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
       }
-      admin.password = await bcrypt.hash(password, 10);
+      updatedPassword = await bcrypt.hash(password, 10);
     }
 
-    await admin.save();
+    await db.query(
+      'UPDATE `admins` SET email = ?, password = ? WHERE id = ?',
+      [updatedEmail, updatedPassword, admin.id]
+    );
 
     // Re-issue a fresh JWT with updated email (30d)
     const token = jwt.sign(
-      { id: admin._id, email: admin.email, role: admin.role },
-      process.env.JWT_SECRET,
+      { id: admin.id, email: updatedEmail, role: admin.role },
+      process.env.JWT_SECRET || 'biks_jwt_secret_key_2024_trading_company',
       { expiresIn: '30d' }
     );
 
     res.json({
       message: 'Credentials updated successfully.',
-      email: admin.email,
+      email: updatedEmail,
       token,
     });
   } catch (err) {
@@ -158,7 +146,7 @@ router.post('/refresh', async (req, res) => {
     // Decode even if expired
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'biks_jwt_secret_key_2024_trading_company', { ignoreExpiration: true });
     } catch (e) {
       return res.status(401).json({ error: 'Invalid token signature.' });
     }
@@ -170,14 +158,15 @@ router.post('/refresh', async (req, res) => {
     }
 
     // Verify admin still exists in DB
-    const admin = await Admin.findById(decoded.id);
+    const rows = await db.query('SELECT id, email, role FROM `admins` WHERE id = ? LIMIT 1', [decoded.id]);
+    const admin = rows[0];
     if (!admin) {
       return res.status(401).json({ error: 'Admin account no longer exists.' });
     }
 
     const freshToken = jwt.sign(
-      { id: admin._id, email: admin.email, role: admin.role },
-      process.env.JWT_SECRET,
+      { id: admin.id, email: admin.email, role: admin.role },
+      process.env.JWT_SECRET || 'biks_jwt_secret_key_2024_trading_company',
       { expiresIn: '30d' }
     );
 

@@ -14,6 +14,7 @@ import {
   FileText,
   Zap,
   Phone,
+  Car,
 } from 'lucide-react';
 
 import { fetchVehicle, type Vehicle } from '@/lib/api';
@@ -43,6 +44,7 @@ export function VehicleDetailsPage({ id }: { id: string }) {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [mainImgError, setMainImgError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /* --------------------------------
@@ -261,18 +263,22 @@ export function VehicleDetailsPage({ id }: { id: string }) {
             {/* Gallery */}
             <div>
               <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
-                {gallery.length > 0 ? (
+                {gallery.length > 0 && !mainImgError ? (
                   <img
                     src={gallery[activeImage]}
                     alt={vehicleName}
+                    onError={() => setMainImgError(true)}
                     className="h-full w-full object-cover"
                     loading="lazy"
                     decoding="async"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <span className="text-sm text-gray-400">
-                      No image available
+                  <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 p-8 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-200">
+                      <Car className="h-8 w-8 text-[#001030]/60" />
+                    </div>
+                    <span className="mt-3 text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                      BIKS TRADING COMPANY
                     </span>
                   </div>
                 )}
@@ -298,12 +304,15 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                     <button
                       key={`${image}-${index}`}
                       type="button"
-                      onClick={() => setActiveImage(index)}
+                      onClick={() => {
+                        setActiveImage(index);
+                        setMainImgError(false);
+                      }}
                       aria-label={`View image ${index + 1}`}
                       aria-current={
                         activeImage === index ? 'true' : undefined
                       }
-                      className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                      className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all flex items-center justify-center bg-gray-100 ${
                         activeImage === index
                           ? 'border-gold shadow-sm'
                           : 'border-transparent hover:border-gray-300'
@@ -312,10 +321,14 @@ export function VehicleDetailsPage({ id }: { id: string }) {
                       <img
                         src={image}
                         alt=""
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
                         className="h-full w-full object-cover"
                         loading="lazy"
                         decoding="async"
                       />
+                      <Car className="h-4 w-4 text-gray-400 pointer-events-none" />
                     </button>
                   ))}
                 </div>

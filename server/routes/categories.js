@@ -1,48 +1,26 @@
 const express = require('express');
-const Category = require('../models/Category');
+const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-// Default 7 categories requested by client
-const DEFAULT_CATEGORIES = [
-  'Trucks',
-  'Cars',
-  'Tyre Shover',
-  'Forklifts',
-  'Agricultural Machines',
-  'Truck Fixtures',
-  'Other Parts',
-];
-
-// Helper: Seed default categories if none exist
-async function seedDefaultCategories() {
-  try {
-    const count = await Category.countDocuments();
-    if (count === 0) {
-      console.log('Seeding default categories...');
-      const docs = DEFAULT_CATEGORIES.map((name, index) => ({
-        name,
-        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        order: index + 1,
-      }));
-      await Category.insertMany(docs);
-      console.log('Default categories seeded successfully.');
-    }
-  } catch (err) {
-    console.error('Error seeding categories:', err.message);
-  }
+function formatCategory(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    order: row.display_order !== undefined ? row.display_order : 0,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
 }
 
 // GET /api/categories — List all categories
 router.get('/', async (req, res) => {
   try {
-    let categories = await Category.find().sort({ order: 1, createdAt: 1 });
-    if (categories.length === 0) {
-      await seedDefaultCategories();
-      categories = await Category.find().sort({ order: 1, createdAt: 1 });
-    }
-    res.json(categories);
+    const rows = await db.query('SELECT * FROM `categories` ORDER BY `display_order` ASC, `created_at` ASC');
+    res.json(rows.map(formatCategory));
   } catch (err) {
     console.error('Error fetching categories:', err);
     res.status(500).json({ error: 'Failed to fetch categories.' });
@@ -58,22 +36,24 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const trimmed = name.trim();
-    // Check if already exists
-    const existing = await Category.findOne({ name: new RegExp('^' + trimmed + '$', 'i') });
-    if (existing) {
-      return res.json(existing);
+    // Check if already exists (case-insensitive)
+    const existing = await db.query('SELECT * FROM `categories` WHERE LOWER(name) = LOWER(?) LIMIT 1', [trimmed]);
+    if (existing.length > 0) {
+      return res.json(formatCategory(existing[0]));
     }
 
-    const count = await Category.countDocuments();
+    const countRows = await db.query('SELECT COUNT(*) AS cnt FROM `categories`');
+    const order = (countRows[0]?.cnt || 0) + 1;
     const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const newId = db.generateId();
 
-    const newCat = await Category.create({
-      name: trimmed,
-      slug,
-      order: count + 1,
-    });
+    await db.query(
+      'INSERT INTO `categories` (id, name, slug, display_order) VALUES (?, ?, ?, ?)',
+      [newId, trimmed, slug, order]
+    );
 
-    res.status(201).json(newCat);
+    const inserted = await db.query('SELECT * FROM `categories` WHERE id = ? LIMIT 1', [newId]);
+    res.status(201).json(formatCategory(inserted[0]));
   } catch (err) {
     console.error('Error creating category:', err);
     res.status(500).json({ error: 'Failed to create category.' });
@@ -89,23 +69,24 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     const trimmed = name.trim();
-    const cat = await Category.findById(req.params.id);
-    if (!cat) {
+    const existing = await db.query('SELECT * FROM `categories` WHERE id = ? LIMIT 1', [req.params.id]);
+    if (existing.length === 0) {
       return res.status(404).json({ error: 'Category not found.' });
     }
 
-    const oldName = cat.name;
+    const oldName = existing[0].name;
     const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-    cat.name = trimmed;
-    cat.slug = slug;
-    await cat.save();
+    await db.query(
+      'UPDATE `categories` SET name = ?, slug = ? WHERE id = ?',
+      [trimmed, slug, req.params.id]
+    );
 
     // Cascade update to vehicles assigned to old category name
-    const Vehicle = require('../models/Vehicle');
-    await Vehicle.updateMany({ category: oldName }, { category: trimmed });
+    await db.query('UPDATE `vehicles` SET category = ? WHERE category = ?', [trimmed, oldName]);
 
-    res.json(cat);
+    const updated = await db.query('SELECT * FROM `categories` WHERE id = ? LIMIT 1', [req.params.id]);
+    res.json(formatCategory(updated[0]));
   } catch (err) {
     console.error('Error updating category:', err);
     res.status(500).json({ error: 'Failed to update category.' });
@@ -115,12 +96,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // DELETE /api/categories/:id — Delete category
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const cat = await Category.findById(req.params.id);
-    if (!cat) {
+    const existing = await db.query('SELECT * FROM `categories` WHERE id = ? LIMIT 1', [req.params.id]);
+    if (existing.length === 0) {
       return res.status(404).json({ error: 'Category not found.' });
     }
 
-    await Category.findByIdAndDelete(req.params.id);
+    await db.query('DELETE FROM `categories` WHERE id = ?', [req.params.id]);
     res.json({ message: 'Category deleted successfully.', id: req.params.id });
   } catch (err) {
     console.error('Error deleting category:', err);
@@ -130,7 +111,5 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
 module.exports = {
   router,
-  seedDefaultCategories,
-  DEFAULT_CATEGORIES,
+  DEFAULT_CATEGORIES: db.DEFAULT_CATEGORIES,
 };
-

@@ -7,6 +7,7 @@ import { CollectionPage } from '@/pages/CollectionPage';
 import { MarketplacePage } from '@/pages/MarketplacePage';
 import { VehicleDetailsPage } from '@/pages/VehicleDetailsPage';
 import { AboutPage } from '@/pages/AboutPage';
+import { SellPage } from '@/pages/SellPage';
 import { AdminLoginPage } from '@/pages/AdminLoginPage';
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage';
 
@@ -24,6 +25,8 @@ function App() {
   } else if (matchRoute(path, '/vehicle/:id')) {
     const params = matchRoute(path, '/vehicle/:id')!;
     page = <VehicleDetailsPage id={params.id} />;
+  } else if (path === '/sell') {
+    page = <SellPage />;
   } else if (path === '/about') {
     page = <AboutPage />;
   } else if (path === '/admin/login') {

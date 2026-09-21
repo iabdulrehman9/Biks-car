@@ -3,7 +3,7 @@
 // ============================================================================
 
 const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const API_BASE = (isLocal ? 'http://localhost:5000' : (import.meta.env.VITE_API_URL || 'https://biks-car.onrender.com')).replace(/\/+$/, '') + '/api';
+const API_BASE = (isLocal ? 'http://localhost:5000' : 'https://api.biks.online') + '/api';
 
 // ============================================================================
 // Types (unchanged from old supabase.ts)
@@ -38,6 +38,33 @@ export interface Vehicle {
   updated_at: string;
 }
 
+export type SellRequestStatus = 'Pending' | 'Contacted' | 'Completed' | 'Rejected';
+
+export interface SellRequest {
+  id: string;
+  customer_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  category?: string | null;
+  description: string;
+  images?: string[] | null;
+  status: SellRequestStatus;
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSellRequestInput {
+  customer_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  category?: string;
+  description: string;
+  images?: File[];
+}
+
 // ============================================================================
 // Vehicle API
 // ============================================================================
@@ -63,6 +90,23 @@ export function invalidateCategoriesCache(): void {
   categoriesCache = null;
 }
 
+function fixImageUrl(url: string | null): string | null {
+  if (!url) return url;
+  if (url.includes('hostingersite.com')) {
+    return url.replace(/https?:\/\/[^/]+/, 'https://api.biks.online');
+  }
+  return url;
+}
+
+function normalizeVehicle(v: Vehicle): Vehicle {
+  if (!v) return v;
+  return {
+    ...v,
+    image_url: fixImageUrl(v.image_url),
+    gallery: Array.isArray(v.gallery) ? v.gallery.map(fixImageUrl).filter(Boolean) as string[] : v.gallery,
+  };
+}
+
 export async function fetchVehicles(forceFresh = false): Promise<Vehicle[]> {
   const now = Date.now();
   if (!forceFresh && vehiclesCache && (now - vehiclesCache.timestamp < CACHE_TTL_MS)) {
@@ -70,7 +114,7 @@ export async function fetchVehicles(forceFresh = false): Promise<Vehicle[]> {
     if (now - vehiclesCache.timestamp > 15000) {
       fetch(`${API_BASE}/vehicles`)
         .then(res => res.ok ? res.json() : null)
-        .then(data => { if (data) vehiclesCache = { data, timestamp: Date.now() }; })
+        .then(raw => { if (raw) vehiclesCache = { data: raw.map(normalizeVehicle), timestamp: Date.now() }; })
         .catch(() => {});
     }
     return vehiclesCache.data;
@@ -78,7 +122,8 @@ export async function fetchVehicles(forceFresh = false): Promise<Vehicle[]> {
 
   const res = await fetch(`${API_BASE}/vehicles`);
   if (!res.ok) throw new Error('Failed to fetch vehicles');
-  const data = await res.json();
+  const raw: Vehicle[] = await res.json();
+  const data = raw.map(normalizeVehicle);
   vehiclesCache = { data, timestamp: Date.now() };
   return data;
 }
@@ -92,7 +137,8 @@ export async function fetchVehicle(id: string): Promise<Vehicle | null> {
   const res = await fetch(`${API_BASE}/vehicles/${id}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error('Failed to fetch vehicle');
-  return res.json();
+  const raw = await res.json();
+  return normalizeVehicle(raw);
 }
 
 export async function createVehicle(formData: FormData): Promise<Vehicle> {
@@ -105,7 +151,8 @@ export async function createVehicle(formData: FormData): Promise<Vehicle> {
     throw new Error(err.error || 'Failed to create vehicle');
   }
   invalidateVehiclesCache();
-  return res.json();
+  const raw = await res.json();
+  return normalizeVehicle(raw);
 }
 
 export async function updateVehicle(id: string, formData: FormData): Promise<Vehicle> {
@@ -118,7 +165,8 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Veh
     throw new Error(err.error || 'Failed to update vehicle');
   }
   invalidateVehiclesCache();
-  return res.json();
+  const raw = await res.json();
+  return normalizeVehicle(raw);
 }
 
 export async function deleteVehicle(id: string): Promise<void> {
@@ -394,5 +442,75 @@ export async function verifyToken(): Promise<boolean> {
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+// ============================================================================
+// Sell Requests API
+// ============================================================================
+
+export async function submitSellRequest(input: CreateSellRequestInput): Promise<{ message: string; request: SellRequest }> {
+  const formData = new FormData();
+  formData.append('customer_name', input.customer_name);
+  formData.append('email', input.email);
+  formData.append('phone', input.phone);
+  formData.append('address', input.address);
+  if (input.category) formData.append('category', input.category);
+  formData.append('description', input.description);
+
+  if (input.images && input.images.length > 0) {
+    input.images.forEach((file) => {
+      formData.append('images', file);
+    });
+  }
+
+  const res = await fetch(`${API_BASE}/sell-requests`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to submit request' }));
+    throw new Error(err.error || 'Failed to submit request');
+  }
+
+  return res.json();
+}
+
+export async function fetchSellRequests(status?: string): Promise<SellRequest[]> {
+  const url = status && status !== 'all'
+    ? `/sell-requests?status=${encodeURIComponent(status)}`
+    : '/sell-requests';
+  const res = await authFetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to fetch sell requests' }));
+    throw new Error(err.error || 'Failed to fetch sell requests');
+  }
+  return res.json();
+}
+
+export async function updateSellRequest(
+  id: string,
+  updates: { status?: SellRequestStatus; admin_notes?: string }
+): Promise<SellRequest> {
+  const res = await authFetch(`/sell-requests/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to update request' }));
+    throw new Error(err.error || 'Failed to update request');
+  }
+  return res.json();
+}
+
+export async function deleteSellRequest(id: string): Promise<void> {
+  const res = await authFetch(`/sell-requests/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to delete request' }));
+    throw new Error(err.error || 'Failed to delete request');
   }
 }

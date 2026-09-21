@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Gauge,
   Fuel,
@@ -6,6 +7,7 @@ import {
   MapPin,
   Phone,
   ArrowRight,
+  Car,
 } from 'lucide-react';
 
 import type { Vehicle } from '@/lib/api';
@@ -16,6 +18,7 @@ import { useTranslation } from '@/lib/i18n';
 export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const { navigate } = useRouter();
   const { t, translateCat, translateSt, translateTrans, translateF } = useTranslation();
+  const [imgError, setImgError] = useState(false);
 
   const COMPANY_PHONE = '+819077144212';
 
@@ -77,11 +80,12 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
       {/* =========================================================
           IMAGE
       ========================================================= */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-        {vehicle.image_url ? (
+      <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+        {vehicle.image_url && !imgError ? (
           <img
             src={vehicle.image_url}
             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+            onError={() => setImgError(true)}
             className="
               h-full w-full object-cover
               transition-transform duration-700 ease-out
@@ -91,8 +95,13 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             decoding="async"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-gray-100 text-sm font-medium text-gray-400">
-            No image available
+          <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 p-4 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-200/80">
+              <Car className="h-6 w-6 text-[#001030]/60" />
+            </div>
+            <span className="mt-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+              BIKS TRADING
+            </span>
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useRouter } from '@/lib/router';
 import { useTranslation } from '@/lib/i18n';
-import truckImg from '@/img/Truck.jfif.jpeg';
+import headlineImg from '@/img/Headline.png';
 
 export function RedBannerSlider() {
   const { navigate } = useRouter();
@@ -66,12 +66,12 @@ export function RedBannerSlider() {
                 {welcomeText}
               </span>
 
-              {/* Truck.jfif.jpeg Image */}
+              {/* Headline Machine Image */}
               <div className="flex items-center shrink-0">
                 <img
-                  src={truckImg}
-                  alt="BIKS Machinery Truck"
-                  className="h-9 sm:h-11 md:h-12 w-auto object-contain drop-shadow-[0_3px_6px_rgba(0,0,0,0.6)] filter contrast-105 hover:scale-105 transition-transform"
+                  src={headlineImg}
+                  alt="BIKS Machinery"
+                  className="h-9 sm:h-11 md:h-12 w-auto object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)] filter contrast-105 hover:scale-105 transition-transform bg-transparent"
                   loading="eager"
                   decoding="async"
                 />
